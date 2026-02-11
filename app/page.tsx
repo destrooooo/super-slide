@@ -1,7 +1,11 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { CaretRightIcon, CaretLeftIcon } from "@phosphor-icons/react";
+import {
+  CaretRightIcon,
+  CaretLeftIcon,
+  CircleIcon,
+} from "@phosphor-icons/react";
 
 export default function Home() {
   //  12*[1,1], 5*[2,1], 1*[2,2]
@@ -50,9 +54,105 @@ export default function Home() {
       ],
   };
 
+  const victoryAnimation: Record<number, string[]> = {
+    0:
+      // prettier-ignore
+      [
+        "","","","",
+        "","","","",
+        "","","","",
+        "","","","",
+        "","red","red",""
+      ],
+    1:
+      // prettier-ignore
+      [
+        "","","","",
+        "","","","",
+        "","","","",
+        "","red","red","",
+        "","red","red",""
+      ],
+    2:
+      // prettier-ignore
+      [
+        "","","","",
+        "","","","",
+        "","red","red","",
+        "","red","red","",
+        "","","",""
+      ],
+    3:
+      // prettier-ignore
+      [
+        "","","","",
+        "","red","red","",
+        "","red","red","",
+        "","","","",
+        "","","",""
+      ],
+    4:
+      // prettier-ignore
+      [
+        "","","red","",
+        "red","red","red","",
+        "","red","red","red",
+        "","red","","",
+        "","","",""
+      ],
+    5:
+      // prettier-ignore
+      [
+        "","red","red","",
+        "red","red","red","red",
+        "red","red","red","red",
+        "","red","red","",
+        "","","",""
+      ],
+    6:
+      // prettier-ignore
+      [
+        "red","","","red",
+        "","red","red","",
+        "","red","red","",
+        "red","","","red",
+        "","","",""
+      ],
+    7:
+      // prettier-ignore
+      [
+        "","red","red","",
+        "red","","","red",
+        "red","","","red",
+        "","red","red","",
+        "","","",""
+      ],
+    8:
+      // prettier-ignore
+      [
+        "red","","","red",
+        "","","","",
+        "red","","","red",
+        "","","","",
+        "","","",""
+      ],
+    9:
+      // prettier-ignore
+      [
+        "","","","",
+        "","","","",
+        "","","","",
+        "","","","",
+        "","","",""
+      ],
+  };
+
+  const [animationIndex, setAnimationIndex] = useState(0);
   const [levelNum, setLevelNum] = useState(1);
   const [isWin, setIsWin] = useState(false);
   const [moveCount, setMoveCount] = useState(0);
+  const [animationCycle, setAnimationCycle] = useState(0);
+  const CYCLES_TO_PLAY = 3;
 
   function parseLevel(layout: string[]) {
     const pieces = [];
@@ -124,6 +224,24 @@ export default function Home() {
     // console.log(pieces);
     return pieces;
   }
+
+  useEffect(() => {
+    if (isWin && animationCycle < CYCLES_TO_PLAY) {
+      const interval = setInterval(() => {
+        setAnimationIndex((prev) => {
+          const nextIndex = (prev + 1) % Object.keys(victoryAnimation).length;
+
+          if (prev === Object.keys(victoryAnimation).length - 1) {
+            setAnimationCycle((c) => c + 1);
+          }
+
+          return nextIndex;
+        });
+      }, 250);
+
+      return () => clearInterval(interval);
+    }
+  }, [isWin, animationCycle]);
 
   const [pieces, setPieces] = useState(
     calculateDraggablePieces(parseLevel(levels[3])),
@@ -425,59 +543,93 @@ export default function Home() {
       <div className="relative bg-zinc-800 rounded-3xl shadow-2xl p-4 max-w-md w-full flex flex-col gap-4 drop-shadow-2xl/50">
         <div className="flex flex-row">
           <div className="aspect-square w-38 bg-black rounded-xl py-1.5">
-            <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
-              {levels[levelNum].map((cell, index) => (
-                <div
-                  className="rounded"
-                  key={index}
-                  style={{
-                    background:
-                      cell === "red"
-                        ? "#f3701e"
-                        : cell === "blue"
-                          ? "#4b607f"
-                          : cell === "yellow"
-                            ? "#e8d8c9"
-                            : cell === "green"
-                              ? "#4b607f"
+            {isWin && animationCycle < CYCLES_TO_PLAY ? (
+              <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+                {victoryAnimation[animationIndex].map((cell, index) => (
+                  <div
+                    className="rounded"
+                    key={index}
+                    style={{
+                      background:
+                        cell === "red"
+                          ? "#f3701e"
+                          : cell === "blue"
+                            ? "#4b607f"
+                            : cell === "yellow"
+                              ? "#e8d8c9"
                               : "transparent",
-                  }}
-                />
-              ))}
-            </div>
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+                {levels[levelNum].map((cell, index) => (
+                  <div
+                    className="rounded"
+                    key={index}
+                    style={{
+                      background:
+                        cell === "red"
+                          ? "#f3701e"
+                          : cell === "blue"
+                            ? "#4b607f"
+                            : cell === "yellow"
+                              ? "#e8d8c9"
+                              : cell === "green"
+                                ? "#4b607f"
+                                : "transparent",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex flex-row w-full justify-center gap-3 items-center">
-            <button
-              className="relative h-17 aspect-44/58 rounded-xl bg-[#4b607f] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
-              onClick={() => setLevelNum((prev) => Math.max(1, prev - 1))}
-            >
+            <div className="relative flex flex-col h-full items-center justify-center">
               <CaretLeftIcon
-                size={24}
+                size={16}
                 weight="fill"
-                className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2"
+                className="absolute top-2"
               />
-            </button>
-            <button
-              className="relative aspect-44/58 h-17 rounded-xl bg-[#4b607f] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
-              onClick={() =>
-                setLevelNum((prev) => (levels[prev + 1] ? prev + 1 : prev))
-              }
-            >
+              <button
+                className="relative h-14 aspect-44/58 rounded-xl bg-[#4b607f] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
+                onClick={() => setLevelNum((prev) => Math.max(1, prev - 1))}
+              ></button>
+              <p className="absolute bottom-2 h-4 text-xs">L</p>
+            </div>
+            <div className="relative flex flex-col h-full items-center justify-center">
               <CaretRightIcon
-                size={24}
+                size={16}
                 weight="fill"
-                className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2"
+                className="absolute top-2"
               />
-            </button>
-            <button
-              className="aspect-44/58 h-17 rounded-xl bg-[#f3701e] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
-              onClick={() => {
-                setPieces(
-                  calculateDraggablePieces(parseLevel(levels[levelNum])),
-                );
-                setMoveCount(0); // Reset le compteur aussi
-              }}
-            />
+              <button
+                className="aspect-44/58 h-14 rounded-xl bg-[#4b607f] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
+                onClick={() =>
+                  setLevelNum((prev) => (levels[prev + 1] ? prev + 1 : prev))
+                }
+              ></button>
+              <p className="absolute bottom-2 h-4 text-xs">C</p>
+            </div>
+            <div className="relative flex flex-col h-full items-center justify-center">
+              <CircleIcon size={16} weight="bold" className="absolute top-2" />
+              <button
+                className="aspect-44/58 h-14 rounded-xl bg-[#f3701e] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
+                onClick={() => {
+                  setPieces(
+                    calculateDraggablePieces(parseLevel(levels[levelNum])),
+                  );
+                  setMoveCount(0);
+                  setIsWin(false);
+                  setAnimationCycle(0); //
+                  setAnimationIndex(0);
+                }}
+              />
+              <p className="absolute bottom-2 h-4 max-w-fit text-xs whitespace-nowrap font-light">
+                ON / OFF
+              </p>
+            </div>
             {/* <div>Coups : {moveCount}</div> */}
           </div>
         </div>
@@ -486,6 +638,13 @@ export default function Home() {
           className="relative grid grid-cols-4 grid-rows-5 gap-px w-full bg-neutral-950 p-2 rounded-2xl"
           style={{ aspectRatio: "4/5" }}
         >
+          <div
+            className="absolute bg-[#f3701e] rounded-xl bottom-2 left-1/2 -translate-x-1/2 opacity-20 z-0"
+            style={{
+              width: `calc(${cellSize.width * 2}px - 0.5rem)`,
+              height: `calc(${cellSize.height * 2}px - 0.5rem)`,
+            }}
+          ></div>
           {pieces.map((piece) => (
             <motion.div
               layout
@@ -517,7 +676,7 @@ export default function Home() {
                     ? "grab"
                     : "not-allowed",
               }}
-              className="card rounded-xl"
+              className="card rounded-xl z-1 drop-shadow-lg"
               data-id={piece.id}
             ></motion.div>
           ))}
