@@ -1,17 +1,24 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { CaretRightIcon, CaretLeftIcon } from "@phosphor-icons/react";
 
 export default function Home() {
   //  12*[1,1], 5*[2,1], 1*[2,2]
   // grid-area: rowStart / colStart / rowEnd / colEnd
-  const CONTAINER_WIDTH = 400;
-  const CONTAINER_HEIGHT = 500;
-  const CELL_WIDTH = CONTAINER_WIDTH / 4;
-  const CELL_HEIGHT = CONTAINER_HEIGHT / 5;
 
-  const [isWin, setIsWin] = useState(false);
-  const [moveCount, setMoveCount] = useState(0);
+  const gridRef = useRef(null);
+  const [cellSize, setCellSize] = useState({ width: 100, height: 100 });
+
+  useEffect(() => {
+    if (gridRef.current) {
+      const rect = gridRef.current.getBoundingClientRect();
+      setCellSize({
+        width: rect.width / 4,
+        height: rect.height / 5,
+      });
+    }
+  }, []);
 
   const levels: Record<number, string[]> = {
     1:
@@ -42,6 +49,10 @@ export default function Home() {
         "yellow","","yellow","blue"
       ],
   };
+
+  const [levelNum, setLevelNum] = useState(1);
+  const [isWin, setIsWin] = useState(false);
+  const [moveCount, setMoveCount] = useState(0);
 
   function parseLevel(layout: string[]) {
     const pieces = [];
@@ -352,13 +363,13 @@ export default function Home() {
     const dragDistance = Math.abs(
       direction === "x" ? info.offset.x : info.offset.y,
     );
-    const cellSize = direction === "x" ? CELL_WIDTH : CELL_HEIGHT;
+    const cellDimension = direction === "x" ? cellSize.width : cellSize.height;
 
     console.log(dragDistance);
     const intendedCells =
-      dragDistance < cellSize * 0.05
+      dragDistance < cellDimension * 0.05
         ? 0
-        : dragDistance > cellSize * 1.3
+        : dragDistance > cellDimension * 1.3
           ? 2
           : 1;
 
@@ -409,46 +420,110 @@ export default function Home() {
   };
 
   return (
-    <>
-      <div>Coups : {moveCount}</div>
-      <div
-        className=" relative border grid grid-cols-4 grid-rows-5 gap-2 "
-        style={{
-          width: CONTAINER_WIDTH,
-          height: CONTAINER_HEIGHT,
-        }}
-      >
-        <div className="absolute w-48.75 h-[194.4px] bottom-0 left-1/2 bg-red-500 opacity-25 -translate-x-1/2 -z-30"></div>
-        {pieces.map((piece) => (
-          <motion.div
-            layout
-            key={piece.id}
-            drag={
-              piece.draggable.x !== 0 && piece.draggable.y !== 0
-                ? true
-                : piece.draggable.x !== 0
-                  ? "x"
-                  : piece.draggable.y !== 0
-                    ? "y"
-                    : false
-            }
-            onDragEnd={(_, info) => handleDragEnd(piece, info)}
-            dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-            dragElastic={0.2}
-            style={{
-              gridArea: piece.area,
-              background: piece.color,
-              cursor:
-                piece.draggable.x !== 0 || piece.draggable.y !== 0
-                  ? "grab"
-                  : "not-allowed",
-            }}
-            className="card"
-            data-id={piece.id}
-          ></motion.div>
-        ))}
+    // #1C223A #E5D2B6 #F44E1C #193564 #5182BC #F6E8DD #E6BF98 #DC3C24 #EFE8CB #324E44 #D0391B #1A1A1A 1E223C
+    <div className="min-h-screen bg-[#f3701e] flex items-center justify-center p-8">
+      <div className="relative bg-zinc-800 rounded-3xl shadow-2xl p-4 max-w-md w-full flex flex-col gap-4 drop-shadow-2xl/50">
+        <div className="flex flex-row">
+          <div className="aspect-square w-38 bg-black rounded-xl py-1.5">
+            <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+              {levels[levelNum].map((cell, index) => (
+                <div
+                  className="rounded"
+                  key={index}
+                  style={{
+                    background:
+                      cell === "red"
+                        ? "#f3701e"
+                        : cell === "blue"
+                          ? "#4b607f"
+                          : cell === "yellow"
+                            ? "#e8d8c9"
+                            : cell === "green"
+                              ? "#4b607f"
+                              : "transparent",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-row w-full justify-center gap-3 items-center">
+            <button
+              className="relative h-17 aspect-44/58 rounded-xl bg-[#4b607f] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
+              onClick={() => setLevelNum((prev) => Math.max(1, prev - 1))}
+            >
+              <CaretLeftIcon
+                size={24}
+                weight="fill"
+                className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2"
+              />
+            </button>
+            <button
+              className="relative aspect-44/58 h-17 rounded-xl bg-[#4b607f] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
+              onClick={() =>
+                setLevelNum((prev) => (levels[prev + 1] ? prev + 1 : prev))
+              }
+            >
+              <CaretRightIcon
+                size={24}
+                weight="fill"
+                className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2"
+              />
+            </button>
+            <button
+              className="aspect-44/58 h-17 rounded-xl bg-[#f3701e] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
+              onClick={() => {
+                setPieces(
+                  calculateDraggablePieces(parseLevel(levels[levelNum])),
+                );
+                setMoveCount(0); // Reset le compteur aussi
+              }}
+            />
+            {/* <div>Coups : {moveCount}</div> */}
+          </div>
+        </div>
+        <div
+          ref={gridRef}
+          className="relative grid grid-cols-4 grid-rows-5 gap-px w-full bg-neutral-950 p-2 rounded-2xl"
+          style={{ aspectRatio: "4/5" }}
+        >
+          {pieces.map((piece) => (
+            <motion.div
+              layout
+              key={piece.id}
+              drag={
+                piece.draggable.x !== 0 && piece.draggable.y !== 0
+                  ? true
+                  : piece.draggable.x !== 0
+                    ? "x"
+                    : piece.draggable.y !== 0
+                      ? "y"
+                      : false
+              }
+              onDragEnd={(_, info) => handleDragEnd(piece, info)}
+              dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+              dragElastic={0.2}
+              style={{
+                gridArea: piece.area,
+                background:
+                  piece.color === "red"
+                    ? "#f3701e"
+                    : piece.color === "blue"
+                      ? "#4b607f"
+                      : piece.color === "yellow"
+                        ? "#e8d8c9"
+                        : "#4b607f",
+                cursor:
+                  piece.draggable.x !== 0 || piece.draggable.y !== 0
+                    ? "grab"
+                    : "not-allowed",
+              }}
+              className="card rounded-xl"
+              data-id={piece.id}
+            ></motion.div>
+          ))}
+        </div>
+        {/* {isWin ? <p>c&apos;est gagné</p> : ""} */}
       </div>
-      {isWin ? <p>c&apos;est gagné</p> : ""}
-    </>
+    </div>
   );
 }
