@@ -1,11 +1,17 @@
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { area } from "framer-motion/client";
 
 export default function Home() {
   //  12*[1,1], 5*[2,1], 1*[2,2]
   // grid-area: rowStart / colStart / rowEnd / colEnd
+  const CONTAINER_WIDTH = 400;
+  const CONTAINER_HEIGHT = 500;
+  const CELL_WIDTH = CONTAINER_WIDTH / 4;
+  const CELL_HEIGHT = CONTAINER_HEIGHT / 5;
+
+  const [isWin, setIsWin] = useState(false);
+  const [moveCount, setMoveCount] = useState(0);
 
   const levels: Record<number, string[]> = {
     1:
@@ -104,7 +110,7 @@ export default function Home() {
         }
       }
     }
-    console.log(pieces);
+    // console.log(pieces);
     return pieces;
   }
 
@@ -113,26 +119,23 @@ export default function Home() {
   );
 
   function calculateDraggablePieces(pieces) {
-    // 1. Créer grille 5x4 remplie de false
+    // Create 2D table for used spaces
     const grid = Array(5)
       .fill(null)
       .map(() => Array(4).fill(false));
 
-    // 2. Marquer toutes les cellules occupées par toutes les pièces
+    // Set used spaces
     pieces.forEach((piece) => {
-      // TODO: parser gridArea pour extraire rowStart, colStart, rowEnd, colEnd
-      // grid-area: rowStart / colStart / rowEnd / colEnd
       const [rowStart, colStart, rowEnd, colEnd] = piece.area
         .split("/")
         .map((n) => parseInt(n.trim()));
 
-      // TODO: double boucle pour marquer chaque cellule occupée
       for (let row = rowStart - 1; row < rowEnd - 1; row++)
         for (let col = colStart - 1; col < colEnd - 1; col++)
           grid[row][col] = true;
     });
 
-    // 3. Pour chaque pièce, calculer draggable.x et draggable.y
+    // check if pieces are draggable
     return pieces.map((piece) => {
       //parse gridArea
 
@@ -140,6 +143,7 @@ export default function Home() {
         .split("/")
         .map((n) => parseInt(n.trim()));
 
+      // check if all cell have space up
       const canMoveUp = (() => {
         //check if on edge
         if (rowStart - 1 <= 0) {
@@ -203,10 +207,9 @@ export default function Home() {
         return true;
       })();
 
-      // Calculer les valeurs x et y
-      let x = 0; // 0 = bloqué
-      if (canMoveLeft && canMoveRight)
-        x = 2; // les deux
+      // set draggable axys
+      let x = 0; //
+      if (canMoveLeft && canMoveRight) x = 2;
       else if (canMoveLeft) x = -1;
       else if (canMoveRight) x = 1;
 
@@ -222,21 +225,200 @@ export default function Home() {
     });
   }
 
-  const testMove = () => {
-    setPieces((prev) =>
-      prev.map((piece) =>
-        piece.id === 8 ? { ...piece, area: "3/4/5/5" } : piece,
-      ),
+  const handleDragEnd = (piece, info) => {
+    console.log(info);
+    const direction =
+      Math.abs(info.offset.x) > Math.abs(info.offset.y) ? "x" : "y";
+    const sign =
+      direction === "x"
+        ? info.offset.x > 0
+          ? "+"
+          : "-"
+        : info.offset.y > 0
+          ? "+"
+          : "-";
+
+    console.log(`Direction: ${direction}, Signe: ${sign}`);
+
+    const calculateMaxMove = (piece, direction, sign) => {
+      const [rowStart, colStart, rowEnd, colEnd] = piece.area
+        .split("/")
+        .map((n) => parseInt(n.trim()));
+
+      let moveDistance = 0;
+
+      const grid = Array(5)
+        .fill(null)
+        .map(() => Array(4).fill(false));
+
+      pieces.forEach((p) => {
+        const [rs, cs, re, ce] = p.area
+          .split("/")
+          .map((n) => parseInt(n.trim()));
+        for (let row = rs - 1; row < re - 1; row++)
+          for (let col = cs - 1; col < ce - 1; col++) grid[row][col] = true;
+      });
+
+      //on y +
+      if (direction === "y" && sign === "+") {
+        let currentRow = rowEnd - 1;
+
+        while (currentRow < 5) {
+          let allFree = true;
+          for (let col = colStart - 1; col < colEnd - 1; col++) {
+            if (grid[currentRow][col] === true) {
+              allFree = false;
+              break;
+            }
+          }
+
+          if (allFree) {
+            moveDistance++;
+            currentRow++;
+          } else {
+            break;
+          }
+        }
+      }
+      //on y -
+      if (direction === "y" && sign === "-") {
+        let currentRow = rowStart - 2;
+
+        while (currentRow >= 0) {
+          let allFree = true;
+          for (let col = colStart - 1; col < colEnd - 1; col++) {
+            if (grid[currentRow][col] === true) {
+              allFree = false;
+              break;
+            }
+          }
+
+          if (allFree) {
+            moveDistance++;
+            currentRow--;
+          } else {
+            break;
+          }
+        }
+      }
+      //on x +
+      if (direction === "x" && sign === "+") {
+        let currentCol = colEnd - 1;
+
+        while (currentCol < 4) {
+          let allFree = true;
+          for (let row = rowStart - 1; row < rowEnd - 1; row++) {
+            if (grid[row][currentCol] === true) {
+              allFree = false;
+              break;
+            }
+          }
+
+          if (allFree) {
+            moveDistance++;
+            currentCol++;
+          } else {
+            break;
+          }
+        }
+      }
+      //on x-
+      if (direction === "x" && sign === "-") {
+        let currentCol = colStart - 2;
+
+        while (currentCol >= 0) {
+          let allFree = true;
+          for (let row = rowStart - 1; row < rowEnd - 1; row++) {
+            if (grid[row][currentCol] === true) {
+              allFree = false;
+              break;
+            }
+          }
+
+          if (allFree) {
+            moveDistance++;
+            currentCol--;
+          } else {
+            break;
+          }
+        }
+      }
+
+      return moveDistance;
+    };
+
+    const maxMove = calculateMaxMove(piece, direction, sign);
+    console.log(`Direction: ${direction}${sign}, Max move: ${maxMove} cases`);
+    const dragDistance = Math.abs(
+      direction === "x" ? info.offset.x : info.offset.y,
     );
+    const cellSize = direction === "x" ? CELL_WIDTH : CELL_HEIGHT;
+
+    console.log(dragDistance);
+    const intendedCells =
+      dragDistance < cellSize * 0.05
+        ? 0
+        : dragDistance > cellSize * 1.3
+          ? 2
+          : 1;
+
+    const actualMove = Math.min(intendedCells, maxMove);
+    console.log("actual move", actualMove);
+    const calculateNewGridArea = (oldArea, direction, sign, actualMove) => {
+      const [rowStart, colStart, rowEnd, colEnd] = oldArea
+        .split("/")
+        .map((n) => parseInt(n.trim()));
+
+      if (direction === "y" && sign === "+") {
+        return `${rowStart + actualMove} / ${colStart} / ${rowEnd + actualMove} / ${colEnd}`;
+      }
+      if (direction === "y" && sign === "-") {
+        return `${rowStart - actualMove} / ${colStart} / ${rowEnd - actualMove} / ${colEnd}`;
+      }
+      if (direction === "x" && sign === "+") {
+        return `${rowStart} / ${colStart + actualMove} / ${rowEnd} / ${colEnd + actualMove}`;
+      }
+      if (direction === "x" && sign === "-") {
+        return `${rowStart} / ${colStart - actualMove} / ${rowEnd} / ${colEnd - actualMove}`;
+      }
+    };
+    if (actualMove > 0) {
+      const newArea = calculateNewGridArea(
+        piece.area,
+        direction,
+        sign,
+        actualMove,
+      );
+      setPieces((prevPieces) => {
+        const updatedPieces = prevPieces.map((p) =>
+          p.id === piece.id ? { ...p, area: newArea } : p,
+        );
+        const newPieces = calculateDraggablePieces(updatedPieces);
+
+        const redPiece = newPieces.find((p) => p.color === "red");
+        if (redPiece && redPiece.area === "4 / 2 / 6 / 4") {
+          setIsWin(true);
+        } else {
+          setIsWin(false);
+        }
+
+        return newPieces;
+      });
+      setMoveCount((prev) => prev + 1);
+    }
   };
 
   return (
     <>
-      <button onClick={testMove} className="mb-4 px-4 py-2 bg-blue-500">
-        Test Move Piece 1
-      </button>
-      <div className=" relative w-100 h-125 border grid grid-cols-4 grid-rows-5 gap-2 ">
-        <div className="absolute w-[195px] h-[194.4px] bottom-0 left-1/2 bg-red-500 opacity-25 -translate-x-1/2 -z-30"></div>
+      <div>Coups : {moveCount}</div>
+      <div
+        className=" relative border grid grid-cols-4 grid-rows-5 gap-2 "
+        style={{
+          width: CONTAINER_WIDTH,
+          height: CONTAINER_HEIGHT,
+        }}
+      >
+        <div className="absolute w-48.75 h-[194.4px] bottom-0 left-1/2 bg-red-500 opacity-25 -translate-x-1/2 -z-30"></div>
         {pieces.map((piece) => (
           <motion.div
             layout
@@ -250,6 +432,9 @@ export default function Home() {
                     ? "y"
                     : false
             }
+            onDragEnd={(_, info) => handleDragEnd(piece, info)}
+            dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+            dragElastic={0.2}
             style={{
               gridArea: piece.area,
               background: piece.color,
@@ -263,6 +448,7 @@ export default function Home() {
           ></motion.div>
         ))}
       </div>
+      {isWin ? <p>c&apos;est gagné</p> : ""}
     </>
   );
 }
