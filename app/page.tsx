@@ -10,11 +10,38 @@ import {
 export default function Home() {
   //  12*[1,1], 5*[2,1], 1*[2,2]
   // grid-area: rowStart / colStart / rowEnd / colEnd
+  const [isMounted, setIsMounted] = useState(false);
 
-  const gridRef = useRef(null);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const gridRef = useRef<HTMLDivElement>(null);
   const [cellSize, setCellSize] = useState({ width: 100, height: 100 });
-  const [shakeId, setShakeId] = useState(null);
+  const [shakeId, setShakeId] = useState<number | null>(null);
   const [shakeDirection, setShakeDirection] = useState<"x" | "y" | null>(null);
+  const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isHolding, setIsHolding] = useState(false);
+  const [isChallengeMode, setIsChallengeMode] = useState(false);
+  const [timerLeds, setTimerLeds] = useState(Array(20).fill(true));
+  const [countdownValue, setCountdownValue] = useState<number | null>(null);
+  const [screenState, setScreenState] = useState("level-preview"); // 'level-preview', 'challenge-intro', 'countdown', 'timer', 'victory'
+  const [gameTimer, setGameTimer] = useState(0);
+  const [isLose, setIsLose] = useState(false);
+  const [finalRating, setFinalRating] = useState<string | null>(null);
+
+  type BasePiece = {
+    id: number;
+    area: string;
+    color: string;
+  };
+
+  type Piece = BasePiece & {
+    draggable: {
+      x: number;
+      y: number;
+    };
+  };
 
   useEffect(() => {
     if (gridRef.current) {
@@ -25,6 +52,312 @@ export default function Home() {
       });
     }
   }, []);
+
+  const score: Record<string, string[]> = {
+    s:
+      // prettier-ignore
+      [
+        "","green","green","green",
+        "green","","","",
+        "","green","green","",
+        "","","","green",
+        "green","green","green",""
+      ],
+    a:
+      // prettier-ignore
+      [
+        "","green","green","",
+        "green","","","green",
+        "green","green","green","green",
+        "green","","","green",
+        "green","","","green"
+      ],
+    b:
+      // prettier-ignore
+      [
+        "green","green","","",
+        "green","","","green",
+        "green","green","","",
+        "green","","","green",
+        "green","green","",""
+      ],
+    c:
+      // prettier-ignore
+      [
+        "","green","green","green",
+        "green","","","",
+        "green","","","",
+        "green","","","",
+        "","green","green","green"
+      ],
+    d:
+      // prettier-ignore
+      [
+        "yellow","yellow","yellow","",
+        "yellow","","","yellow",
+        "yellow","","","yellow",
+        "yellow","","","yellow",
+        "yellow","yellow","yellow",""
+      ],
+    e:
+      // prettier-ignore
+      [
+        "yellow","yellow","yellow","yellow",
+        "yellow","","","",
+        "yellow","yellow","yellow","",
+        "yellow","","","",
+        "yellow","yellow","yellow","yellow"
+      ],
+    f:
+      // prettier-ignore
+      [
+        "red","red","red","red",
+        "red","","","",
+        "red","red","red","",
+        "red","","","",
+        "red","","",""
+      ],
+  };
+
+  const figures: Record<number, string[]> = {
+    0:
+      // prettier-ignore
+      [
+        "","blue","blue","blue",
+        "","blue","","blue",
+        "","blue","","blue",
+        "","blue","","blue",
+        "","blue","blue","blue"
+      ],
+    1:
+      // prettier-ignore
+      [
+        "","","blue","",
+        "","blue","blue","",
+        "","","blue","",
+        "","","blue","",
+        "","blue","blue","blue"
+      ],
+    2:
+      // prettier-ignore
+      [
+        "","blue","blue","blue",
+        "","","","blue",
+        "","blue","blue","blue",
+        "","blue","","",
+        "","blue","blue","blue"
+      ],
+    3:
+      // prettier-ignore
+      [
+        "","blue","blue","blue",
+        "","","","blue",
+        "","blue","blue","blue",
+        "","","","blue",
+        "","blue","blue","blue"
+      ],
+    4:
+      // prettier-ignore
+      [
+        "","blue","","blue",
+        "","blue","","blue",
+        "","blue","blue","blue",
+        "","","","blue",
+        "","","","blue"
+      ],
+    5:
+      // prettier-ignore
+      [
+        "","blue","blue","blue",
+        "","blue","","",
+        "","blue","blue","blue",
+        "","","","blue",
+        "","blue","blue","blue"
+      ],
+    6:
+      // prettier-ignore
+      [
+        "","blue","blue","blue",
+        "","blue","","",
+        "","blue","blue","blue",
+        "","blue","","blue",
+        "","blue","blue","blue"
+      ],
+    7:
+      // prettier-ignore
+      [
+        "","blue","blue","blue",
+        "","","","blue",
+        "","","blue","",
+        "","blue","","",
+        "","blue","",""
+      ],
+    8:
+      // prettier-ignore
+      [
+        "","blue","blue","blue",
+        "","blue","","blue",
+        "","blue","blue","blue",
+        "","blue","","blue",
+        "","blue","blue","blue"
+      ],
+    9:
+      // prettier-ignore
+      [
+        "","blue","blue","blue",
+        "","blue","","blue",
+        "","blue","blue","blue",
+        "","","","blue",
+        "","blue","blue","blue"
+      ],
+  };
+
+  const figuresAnimated: Record<number, string[]> = {
+    0:
+      // prettier-ignore
+      [
+        "blue","blue","blue","",
+        "blue","","blue","",
+        "blue","","blue","",
+        "blue","","blue","",
+        "blue","blue","blue",""
+      ],
+    1:
+      // prettier-ignore
+      [
+        "","blue","","",
+        "blue","blue","","",
+        "","blue","","",
+        "","blue","","",
+        "blue","blue","blue",""
+      ],
+    2:
+      // prettier-ignore
+      [
+        "blue","blue","blue","",
+        "","","blue","",
+        "blue","blue","blue","",
+        "blue","","","",
+        "blue","blue","blue",""
+      ],
+    3:
+      // prettier-ignore
+      [
+        "blue","blue","blue","",
+        "","","blue","",
+        "blue","blue","blue","",
+        "","","blue","",
+        "blue","blue","blue",""
+      ],
+    4:
+      // prettier-ignore
+      [
+        "blue","","blue","",
+        "blue","","blue","",
+        "blue","blue","blue","",
+        "","","blue","",
+        "","","blue",""
+      ],
+    5:
+      // prettier-ignore
+      [
+        "blue","blue","blue","",
+        "blue","","","",
+        "blue","blue","blue","",
+        "","","blue","",
+        "blue","blue","blue",""
+      ],
+    6:
+      // prettier-ignore
+      [
+        "blue","blue","blue","",
+        "blue","","","",
+        "blue","blue","blue","",
+        "blue","","blue","",
+        "blue","blue","blue",""
+      ],
+    7:
+      // prettier-ignore
+      [
+        "blue","blue","blue","",
+        "","","blue","",
+        "","blue","","",
+        "blue","","","",
+        "blue","","",""
+      ],
+    8:
+      // prettier-ignore
+      [
+        "blue","blue","blue","",
+        "blue","","blue","",
+        "blue","blue","blue","",
+        "blue","","blue","",
+        "blue","blue","blue",""
+      ],
+    9:
+      // prettier-ignore
+      [
+        "blue","blue","blue","",
+        "blue","","blue","",
+        "blue","blue","blue","",
+        "","","blue","",
+        "blue","blue","blue",""
+      ],
+  };
+
+  const challengeAnimation: Record<number, string[]> = {
+    1:
+      // prettier-ignore
+      [
+        "","blue","blue","blue",
+        "blue","","","",
+        "blue","","","",
+        "blue","","","",
+        "","blue","blue","blue"
+      ],
+  };
+
+  const gameTimerAnimation: Record<number, string[]> = {
+    1:
+      // prettier-ignore
+      [
+        "","green","green","green",
+        "","","","green",
+        "","green","green","green",
+        "","","","green",
+        "","green","green","green"
+      ],
+    2:
+      // prettier-ignore
+      [
+        "","green","green","green",
+        "","","","green",
+        "","green","green","green",
+        "","green","","",
+        "","green","green","green"
+      ],
+    3:
+      // prettier-ignore
+      [
+        "","","green","",
+        "","green","green","",
+        "","","green","",
+        "","","green","",
+        "","green","green","green"
+      ],
+  };
+
+  const blankGrid: Record<number, string[]> = {
+    1:
+      // prettier-ignore
+      [
+        "","","","",
+        "","","","",
+        "","","","",
+        "","","","",
+        "","","",""
+      ],
+  };
 
   const levels: Record<number, string[]> = {
     1:
@@ -152,12 +485,11 @@ export default function Home() {
   const [animationIndex, setAnimationIndex] = useState(0);
   const [levelNum, setLevelNum] = useState(1);
   const [isWin, setIsWin] = useState(false);
-  const [moveCount, setMoveCount] = useState(0);
   const [animationCycle, setAnimationCycle] = useState(0);
   const CYCLES_TO_PLAY = 3;
 
-  function parseLevel(layout: string[]) {
-    const pieces = [];
+  function parseLevel(layout: string[]): BasePiece[] {
+    const pieces: Array<{ id: number; area: string; color: string }> = [];
     const visited = new Set<number>();
     let piecedId = 1;
 
@@ -227,36 +559,18 @@ export default function Home() {
     return pieces;
   }
 
-  useEffect(() => {
-    if (isWin && animationCycle < CYCLES_TO_PLAY) {
-      const interval = setInterval(() => {
-        setAnimationIndex((prev) => {
-          const nextIndex = (prev + 1) % Object.keys(victoryAnimation).length;
-
-          if (prev === Object.keys(victoryAnimation).length - 1) {
-            setAnimationCycle((c) => c + 1);
-          }
-
-          return nextIndex;
-        });
-      }, 250);
-
-      return () => clearInterval(interval);
-    }
-  }, [isWin, animationCycle]);
-
-  const [pieces, setPieces] = useState(
+  const [pieces, setPieces] = useState<Piece[]>(
     calculateDraggablePieces(parseLevel(levels[3])),
   );
 
-  function calculateDraggablePieces(pieces) {
+  function calculateDraggablePieces(pieces: BasePiece[]): Piece[] {
     // Create 2D table for used spaces
     const grid = Array(5)
       .fill(null)
       .map(() => Array(4).fill(false));
 
     // Set used spaces
-    pieces.forEach((piece) => {
+    pieces.forEach((piece: { id: number; area: string; color: string }) => {
       const [rowStart, colStart, rowEnd, colEnd] = piece.area
         .split("/")
         .map((n) => parseInt(n.trim()));
@@ -356,7 +670,10 @@ export default function Home() {
     });
   }
 
-  const handleDragEnd = (piece, info) => {
+  const handleDragEnd = (
+    piece: Piece,
+    info: { offset: { x: number; y: number } },
+  ) => {
     console.log(info);
     const direction =
       Math.abs(info.offset.x) > Math.abs(info.offset.y) ? "x" : "y";
@@ -381,7 +698,16 @@ export default function Home() {
 
     console.log(`Direction: ${direction}, Signe: ${sign}`);
 
-    const calculateMaxMove = (piece, direction, sign) => {
+    const calculateMaxMove = (
+      piece: {
+        id: number;
+        area: string;
+        color: string;
+        draggable: { x: number; y: number };
+      },
+      direction: string,
+      sign: string,
+    ) => {
       const [rowStart, colStart, rowEnd, colEnd] = piece.area
         .split("/")
         .map((n) => parseInt(n.trim()));
@@ -505,7 +831,12 @@ export default function Home() {
 
     const actualMove = Math.min(intendedCells, maxMove);
     console.log("actual move", actualMove);
-    const calculateNewGridArea = (oldArea, direction, sign, actualMove) => {
+    const calculateNewGridArea = (
+      oldArea: string,
+      direction: string,
+      sign: string,
+      actualMove: number,
+    ): string => {
       const [rowStart, colStart, rowEnd, colEnd] = oldArea
         .split("/")
         .map((n) => parseInt(n.trim()));
@@ -522,6 +853,7 @@ export default function Home() {
       if (direction === "x" && sign === "-") {
         return `${rowStart} / ${colStart - actualMove} / ${rowEnd} / ${colEnd - actualMove}`;
       }
+      return oldArea;
     };
 
     if (intendedCells > 0 && actualMove === 0) {
@@ -549,6 +881,20 @@ export default function Home() {
 
         const redPiece = newPieces.find((p) => p.color === "red");
         if (redPiece && redPiece.area === "4 / 2 / 6 / 4") {
+          // Calcul du score UNIQUEMENT en mode challenge
+          if (isChallengeMode) {
+            const finalTime = gameTimer;
+            let rating = "f";
+
+            if (finalTime <= 10) rating = "s";
+            else if (finalTime <= 15) rating = "a";
+            else if (finalTime <= 20) rating = "b";
+            else if (finalTime <= 30) rating = "c";
+            else if (finalTime <= 45) rating = "d";
+            else if (finalTime <= 60) rating = "e";
+
+            setFinalRating(rating);
+          }
           setIsWin(true);
         } else {
           setIsWin(false);
@@ -556,17 +902,212 @@ export default function Home() {
 
         return newPieces;
       });
-      setMoveCount((prev) => prev + 1);
+    }
+  };
+  // devrait réinitialiser le timer avant
+  const startGameTimer = () => {
+    setScreenState("timer");
+  };
+
+  useEffect(() => {
+    // Fin de partie en mode challenge
+    if (isChallengeMode && (isWin || isLose)) {
+      if (isWin) {
+        setScreenState("victory"); // Animation de victoire
+      } else {
+        setScreenState("score"); // Direct au score F si défaite
+      }
+    }
+
+    // Fin de partie en mode normal
+    if (!isChallengeMode && isWin) {
+      setScreenState("victory");
+    }
+  }, [isWin, isLose, isChallengeMode]);
+
+  useEffect(() => {
+    if (screenState === "victory" && animationCycle < CYCLES_TO_PLAY) {
+      const interval = setInterval(() => {
+        setAnimationIndex((prev) => {
+          const nextIndex = (prev + 1) % Object.keys(victoryAnimation).length;
+
+          if (prev === Object.keys(victoryAnimation).length - 1) {
+            setAnimationCycle((c) => c + 1);
+          }
+
+          return nextIndex;
+        });
+      }, 250);
+
+      return () => clearInterval(interval);
+    }
+  }, [screenState, animationCycle]);
+
+  // Après l'animation de victoire, affiche le score (si challenge)
+  useEffect(() => {
+    console.log("Victory check:", {
+      screenState,
+      animationCycle,
+      CYCLES_TO_PLAY,
+      isChallengeMode,
+      finalRating,
+    });
+    if (screenState === "victory" && animationCycle >= CYCLES_TO_PLAY) {
+      if (isChallengeMode) {
+        console.log("Should show score now!");
+        setScreenState("score");
+      } else {
+        // En mode normal, retour direct au level-preview
+        setScreenState("level-preview");
+        setIsWin(false);
+        setAnimationCycle(0);
+        setAnimationIndex(0);
+      }
+    }
+  }, [screenState, animationCycle, isChallengeMode]);
+
+  // Après le score, retour au level selector
+  useEffect(() => {
+    if (screenState === "score") {
+      const timeout = setTimeout(() => {
+        setScreenState("level-preview");
+        setIsChallengeMode(false);
+        setIsWin(false);
+        setIsLose(false);
+        setAnimationCycle(0);
+        setAnimationIndex(0);
+        setFinalRating(null);
+        setGameTimer(0);
+        setTimerLeds(Array(20).fill(true));
+      }, 3000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [screenState]);
+
+  //gameTimer
+  useEffect(() => {
+    if (screenState === "timer" && !isWin && !isLose) {
+      const interval = setInterval(() => {
+        setGameTimer((prev) => {
+          if (isWin || isLose) {
+            return prev;
+          }
+          const newTime = prev + 1;
+          console.log(newTime);
+
+          // Turn off 1 LED each 3 seconds
+          const ledsOff = Math.floor(newTime / 3);
+          if (ledsOff < 20) {
+            setTimerLeds(Array(20).fill(false).fill(true, ledsOff));
+          }
+
+          // if > 60s = loose
+          if (newTime >= 60) {
+            setIsLose(true);
+            setFinalRating("f");
+          }
+
+          return newTime;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [screenState, isWin, isLose]);
+
+  const startChallengeGame = () => {
+    // 1. Afficher "C" dans l'écran LCD
+    setScreenState("challenge-intro");
+
+    setTimeout(() => {
+      // 2. Countdown 3 → 2 → 1
+      setScreenState("countdown");
+      setCountdownValue(1);
+
+      setTimeout(() => setCountdownValue(2), 1000);
+      setTimeout(() => setCountdownValue(3), 2000);
+
+      setTimeout(() => {
+        // 3. Lancer le jeu
+        setPieces(calculateDraggablePieces(parseLevel(levels[levelNum])));
+        startGameTimer();
+      }, 3000);
+    }, 500);
+  };
+
+  const handleMouseDown = () => {
+    const timer = setTimeout(() => {
+      setIsChallengeMode(true);
+      startChallengeGame();
+      setIsHolding(true);
+    }, 3000);
+
+    setPressTimer(timer);
+  };
+
+  const handleMouseUp = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      setPressTimer(null);
+    }
+
+    //bout de code étrange réinitialise le game timer, initialise la nouvelle grille rempli l'écran led pour le timer remet les animations de victoire à zéro réinitialise le rating
+    if (isChallengeMode) {
+      setPieces(calculateDraggablePieces(parseLevel(levels[levelNum])));
+      setGameTimer(0);
+      setTimerLeds(Array(20).fill(true));
+      setAnimationCycle(0);
+      setFinalRating(null);
+    }
+
+    setIsHolding(false);
+  };
+
+  const stopChallengemode = () => {
+    if (isChallengeMode) {
+      const timer = setTimeout(() => {
+        setIsChallengeMode(false);
+        setIsHolding(true);
+        console.log("mode de jeu normal");
+      }, 3000);
+      setPressTimer(timer);
     }
   };
 
+  const handleMouseUpStopChallenge = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      setPressTimer(null);
+    }
+    setIsHolding(false);
+    console.log("handleMouseUpStopChallenge triggered");
+  };
+
+  const redButtonOnClickHandler = () => {
+    if (isChallengeMode) {
+      setIsChallengeMode(true);
+      startChallengeGame();
+      return;
+    }
+    setPieces(calculateDraggablePieces(parseLevel(levels[levelNum])));
+    setIsWin(false);
+    setAnimationCycle(0);
+    setAnimationIndex(0);
+  };
+
+  if (!isMounted) {
+    return null; // Ou un loader
+  }
+
   return (
-    // #1C223A #E5D2B6 #F44E1C #193564 #5182BC #F6E8DD #E6BF98 #DC3C24 #EFE8CB #324E44 #D0391B #1A1A1A 1E223C
+    // #1C223A #E5D2B6 #F44E1C #193564 #5182BC #F6E8DD #E6BF98 #DC3C24 #EFE8CB #324E44 #D0391B #1A1A1A #1E223C
     <div className="min-h-screen bg-[#f3701e] flex items-center justify-center p-8">
       <div className="relative bg-zinc-800 rounded-3xl shadow-2xl p-4 max-w-md w-full flex flex-col gap-4 drop-shadow-2xl/50">
         <div className="flex flex-row">
           <div className="aspect-square w-38 bg-black rounded-xl py-1.5">
-            {isWin && animationCycle < CYCLES_TO_PLAY ? (
+            {/* Animation de victoire */}
+            {screenState === "victory" && (
               <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
                 {victoryAnimation[animationIndex].map((cell, index) => (
                   <div
@@ -585,7 +1126,94 @@ export default function Home() {
                   />
                 ))}
               </div>
-            ) : (
+            )}
+
+            {/* Animation "C" d'entrée en mode challenge */}
+            {screenState === "challenge-intro" && (
+              <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+                {challengeAnimation[1].map((cell, index) => (
+                  <div
+                    className="rounded"
+                    key={index}
+                    style={{
+                      background:
+                        cell === "red"
+                          ? "#f3701e"
+                          : cell === "blue"
+                            ? "#4b607f"
+                            : cell === "yellow"
+                              ? "#e8d8c9"
+                              : cell === "green"
+                                ? "#324E44"
+                                : "transparent",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Countdown 3 → 2 → 1 */}
+            {screenState === "countdown" && countdownValue && (
+              <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+                {gameTimerAnimation[countdownValue].map((cell, index) => (
+                  <div
+                    className="rounded"
+                    key={index}
+                    style={{
+                      background:
+                        cell === "red"
+                          ? "#f3701e"
+                          : cell === "blue"
+                            ? "#4b607f"
+                            : cell === "yellow"
+                              ? "#e8d8c9"
+                              : cell === "green"
+                                ? "#324E44"
+                                : "transparent",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Grille de LEDs du timer */}
+            {screenState === "timer" && (
+              <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+                {timerLeds.map((isOn, index) => (
+                  <div
+                    className="rounded"
+                    key={index}
+                    style={{
+                      background: isOn ? "#324E44" : "transparent",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Affichage du score */}
+            {screenState === "score" && finalRating && (
+              <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+                {score[finalRating.toLowerCase()].map((cell, index) => (
+                  <div
+                    className="rounded"
+                    key={index}
+                    style={{
+                      background:
+                        cell === "green"
+                          ? "#324E44"
+                          : cell === "yellow"
+                            ? "#e8d8c9"
+                            : cell === "red"
+                              ? "#f3701e"
+                              : "transparent",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+            {/* Preview du niveau (par défaut) */}
+            {!isWin && screenState === "level-preview" && (
               <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
                 {levels[levelNum].map((cell, index) => (
                   <div
@@ -600,7 +1228,7 @@ export default function Home() {
                             : cell === "yellow"
                               ? "#e8d8c9"
                               : cell === "green"
-                                ? "#4b607f"
+                                ? "#324E44"
                                 : "transparent",
                     }}
                   />
@@ -632,6 +1260,9 @@ export default function Home() {
                 onClick={() =>
                   setLevelNum((prev) => (levels[prev + 1] ? prev + 1 : prev))
                 }
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
               ></button>
               <p className="absolute bottom-2 h-4 text-xs">C</p>
             </div>
@@ -639,21 +1270,15 @@ export default function Home() {
               <CircleIcon size={16} weight="bold" className="absolute top-2" />
               <button
                 className="aspect-44/58 h-14 rounded-xl bg-[#f3701e] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
-                onClick={() => {
-                  setPieces(
-                    calculateDraggablePieces(parseLevel(levels[levelNum])),
-                  );
-                  setMoveCount(0);
-                  setIsWin(false);
-                  setAnimationCycle(0); //
-                  setAnimationIndex(0);
-                }}
+                onClick={redButtonOnClickHandler}
+                onMouseDown={stopChallengemode}
+                onMouseLeave={handleMouseUpStopChallenge}
+                onMouseUp={handleMouseUpStopChallenge}
               />
               <p className="absolute bottom-2 h-4 max-w-fit text-xs whitespace-nowrap font-light ">
                 ON / OFF
               </p>
             </div>
-            {/* <div>Coups : {moveCount}</div> */}
           </div>
         </div>
         <div
