@@ -13,6 +13,8 @@ export default function Home() {
 
   const gridRef = useRef(null);
   const [cellSize, setCellSize] = useState({ width: 100, height: 100 });
+  const [shakeId, setShakeId] = useState(null);
+  const [shakeDirection, setShakeDirection] = useState<"x" | "y" | null>(null);
 
   useEffect(() => {
     if (gridRef.current) {
@@ -358,6 +360,16 @@ export default function Home() {
     console.log(info);
     const direction =
       Math.abs(info.offset.x) > Math.abs(info.offset.y) ? "x" : "y";
+
+    if (piece.draggable.x === 0 && piece.draggable.y === 0) {
+      setShakeId(piece.id);
+      setShakeDirection(direction);
+      setTimeout(() => {
+        setShakeId(null);
+        setShakeDirection(null);
+      }, 400);
+      return;
+    }
     const sign =
       direction === "x"
         ? info.offset.x > 0
@@ -511,6 +523,17 @@ export default function Home() {
         return `${rowStart} / ${colStart - actualMove} / ${rowEnd} / ${colEnd - actualMove}`;
       }
     };
+
+    if (intendedCells > 0 && actualMove === 0) {
+      setShakeId(piece.id);
+      setShakeDirection(direction);
+      setTimeout(() => {
+        setShakeId(null);
+        setShakeDirection(null);
+      }, 400);
+      return;
+    }
+
     if (actualMove > 0) {
       const newArea = calculateNewGridArea(
         piece.area,
@@ -585,7 +608,7 @@ export default function Home() {
               </div>
             )}
           </div>
-          <div className="flex flex-row w-full justify-center gap-3 items-center">
+          <div className="flex flex-row w-full justify-center gap-3 items-center text-[#e8d8c9]">
             <div className="relative flex flex-col h-full items-center justify-center">
               <CaretLeftIcon
                 size={16}
@@ -626,7 +649,7 @@ export default function Home() {
                   setAnimationIndex(0);
                 }}
               />
-              <p className="absolute bottom-2 h-4 max-w-fit text-xs whitespace-nowrap font-light">
+              <p className="absolute bottom-2 h-4 max-w-fit text-xs whitespace-nowrap font-light ">
                 ON / OFF
               </p>
             </div>
@@ -647,20 +670,21 @@ export default function Home() {
           ></div>
           {pieces.map((piece) => (
             <motion.div
-              layout
+              layout={shakeId !== piece.id}
               key={piece.id}
-              drag={
-                piece.draggable.x !== 0 && piece.draggable.y !== 0
-                  ? true
-                  : piece.draggable.x !== 0
-                    ? "x"
-                    : piece.draggable.y !== 0
-                      ? "y"
-                      : false
+              drag={true}
+              dragMomentum={false}
+              animate={
+                shakeId === piece.id
+                  ? shakeDirection === "x"
+                    ? { x: [0, -1, 1, -1, 1, 0], y: 0 }
+                    : { x: 0, y: [0, -1, 1, -1, 1, 0] }
+                  : { x: 0, y: 0 }
               }
+              transition={{ duration: 0.4 }}
               onDragEnd={(_, info) => handleDragEnd(piece, info)}
               dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.2}
+              dragElastic={0}
               style={{
                 gridArea: piece.area,
                 background:
@@ -671,12 +695,8 @@ export default function Home() {
                       : piece.color === "yellow"
                         ? "#e8d8c9"
                         : "#4b607f",
-                cursor:
-                  piece.draggable.x !== 0 || piece.draggable.y !== 0
-                    ? "grab"
-                    : "not-allowed",
               }}
-              className="card rounded-xl z-1 drop-shadow-lg"
+              className="card rounded-xl z-1 drop-shadow-lg cursor-grab"
               data-id={piece.id}
             ></motion.div>
           ))}
