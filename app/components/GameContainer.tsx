@@ -45,7 +45,6 @@ export default function GameContainer({ initialLevel }: GameContainerProps) {
   const [levelNum, setLevelNum] = useState(initialLevel);
   const [isWin, setIsWin] = useState(false);
   const [animationCycle, setAnimationCycle] = useState(0);
-
   const [pieces, setPieces] = useState<Piece[]>(
     calculateDraggablePieces(parseLevel(levels[initialLevel.toString()])),
   );

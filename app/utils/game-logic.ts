@@ -13,7 +13,7 @@ export function parseLevel(layout: string[]): BasePiece[] {
       let rowSpan = 1;
 
       if (color === "" || visited.has(index)) continue;
-      if (color === "yellow") {
+      if (color === "🟨") {
         colSpan = 1;
         rowSpan = 1;
         pieces.push({
@@ -22,7 +22,7 @@ export function parseLevel(layout: string[]): BasePiece[] {
           color: color,
         });
         visited.add(index);
-      } else if (color === "red") {
+      } else if (color === "🟥") {
         colSpan = 2;
         rowSpan = 2;
         pieces.push({
@@ -36,7 +36,7 @@ export function parseLevel(layout: string[]): BasePiece[] {
             visited.add(cellIndex);
           }
         }
-      } else if (color === "blue") {
+      } else if (color === "🟦") {
         colSpan = 1;
         rowSpan = 2;
         pieces.push({
@@ -50,7 +50,7 @@ export function parseLevel(layout: string[]): BasePiece[] {
             visited.add(cellIndex);
           }
         }
-      } else if (color === "green") {
+      } else if (color === "🟩") {
         colSpan = 2;
         rowSpan = 1;
         pieces.push({

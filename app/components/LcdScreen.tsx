@@ -18,10 +18,10 @@ type LcdScreenProps = {
 };
 
 const getCellBackground = (cell: string): string => {
-  if (cell === "red") return "#f3701e";
-  if (cell === "blue") return "#4b607f";
-  if (cell === "yellow") return "#e8d8c9";
-  if (cell === "green") return "#324E44";
+  if (cell === "🟥") return "#f3701e";
+  if (cell === "🟦") return "#4b607f";
+  if (cell === "🟨") return "#e8d8c9";
+  if (cell === "🟩") return "#324E44";
   return "transparent";
 };
 

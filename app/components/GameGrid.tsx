@@ -13,9 +13,9 @@ type GameGridProps = {
 };
 
 const getPieceBackground = (color: string): string => {
-  if (color === "red") return "#f3701e";
-  if (color === "blue") return "#4b607f";
-  if (color === "yellow") return "#e8d8c9";
+  if (color === "🟥") return "#f3701e";
+  if (color === "🟦") return "#4b607f";
+  if (color === "🟨") return "#e8d8c9";
   return "#4b607f";
 };
 
