@@ -6,6 +6,7 @@ import challengeAnimation from "../data/challenge-animation.json";
 import gameTimerAnimation from "../data/game-timer-animation.json";
 import victoryAnimation from "../data/victory-animation.json";
 import scoreData from "../data/score.json";
+import { generateLevelNumberFrames } from "../utils/level-animation";
 
 type LcdScreenProps = {
   screenState: ScreenState;
@@ -14,7 +15,7 @@ type LcdScreenProps = {
   timerLeds: boolean[];
   finalRating: Rating | null;
   animationIndex: number;
-  isWin: boolean;
+  levelNumberFrames: string[][];
 };
 
 const getCellBackground = (cell: string): string => {
@@ -32,7 +33,7 @@ export default function LcdScreen({
   timerLeds,
   finalRating,
   animationIndex,
-  isWin,
+  levelNumberFrames,
 }: LcdScreenProps) {
   const levels = levelsData as Record<string, string[]>;
 
@@ -113,9 +114,22 @@ export default function LcdScreen({
         )}
 
         {/* Preview du niveau (par défaut) */}
-        {!isWin && screenState === "level-preview" && (
+        {screenState === "level-preview" && (
           <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
             {levels[levelNum.toString()]?.map((cell, index) => (
+              <div
+                className="rounded"
+                key={index}
+                style={{ background: getCellBackground(cell) }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Animation levelNumber */}
+        {screenState === "level-number" && (
+          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+            {levelNumberFrames[animationIndex]?.map((cell, index) => (
               <div
                 className="rounded"
                 key={index}

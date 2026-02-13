@@ -56,7 +56,7 @@ export function parseLevel(layout: string[]): BasePiece[] {
         pieces.push({
           id: piecedId++,
           area: `${row + 1}/${col + 1}/${row + rowSpan + 1}/${col + colSpan + 1}`,
-          color: "blue",
+          color: "🟦",
         });
         for (let r = 0; r < rowSpan; r++) {
           for (let c = 0; c < colSpan; c++) {

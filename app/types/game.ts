@@ -17,7 +17,8 @@ export type ScreenState =
   | "countdown"
   | "timer"
   | "victory"
-  | "score";
+  | "score"
+  | "level-number";
 
 export type Rating = "s" | "a" | "b" | "c" | "d" | "e" | "f";
 
@@ -35,4 +36,4 @@ export type GameState = {
   animationCycle: number;
 };
 
-export type CellColors = "red" | "blue" | "yellow" | "green" | "";
+export type CellColors = "🟥" | "🟦" | "🟨" | "🟩" | "";
