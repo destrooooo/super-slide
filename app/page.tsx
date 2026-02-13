@@ -904,8 +904,9 @@ export default function Home() {
       });
     }
   };
-  // devrait réinitialiser le timer avant
+
   const startGameTimer = () => {
+    setGameTimer(0);
     setScreenState("timer");
   };
 
@@ -1032,8 +1033,11 @@ export default function Home() {
         // 3. Lancer le jeu
         setPieces(calculateDraggablePieces(parseLevel(levels[levelNum])));
         startGameTimer();
+        setAnimationCycle(0);
+        setTimerLeds(Array(20).fill(true));
+        setFinalRating(null);
       }, 3000);
-    }, 500);
+    }, 1000);
   };
 
   const handleMouseDown = () => {
@@ -1041,6 +1045,8 @@ export default function Home() {
       setIsChallengeMode(true);
       startChallengeGame();
       setIsHolding(true);
+      setPieces(calculateDraggablePieces(parseLevel(levels[levelNum])));
+      setAnimationCycle(0);
     }, 3000);
 
     setPressTimer(timer);
@@ -1050,15 +1056,6 @@ export default function Home() {
     if (pressTimer) {
       clearTimeout(pressTimer);
       setPressTimer(null);
-    }
-
-    //bout de code étrange réinitialise le game timer, initialise la nouvelle grille rempli l'écran led pour le timer remet les animations de victoire à zéro réinitialise le rating
-    if (isChallengeMode) {
-      setPieces(calculateDraggablePieces(parseLevel(levels[levelNum])));
-      setGameTimer(0);
-      setTimerLeds(Array(20).fill(true));
-      setAnimationCycle(0);
-      setFinalRating(null);
     }
 
     setIsHolding(false);
