@@ -1,12 +1,11 @@
 "use client";
 
-import type { ScreenState, Rating } from "../types/game";
+import type { ScreenState, Rating, TimerColor } from "../types/game";
 import levelsData from "../data/levels.json";
 import challengeAnimation from "../data/challenge-animation.json";
 import gameTimerAnimation from "../data/game-timer-animation.json";
 import victoryAnimation from "../data/victory-animation.json";
 import scoreData from "../data/score.json";
-import { generateLevelNumberFrames } from "../utils/level-animation";
 
 type LcdScreenProps = {
   screenState: ScreenState;
@@ -16,6 +15,7 @@ type LcdScreenProps = {
   finalRating: Rating | null;
   animationIndex: number;
   levelNumberFrames: string[][];
+  timerColor: TimerColor;
 };
 
 const getCellBackground = (cell: string): string => {
@@ -34,6 +34,7 @@ export default function LcdScreen({
   finalRating,
   animationIndex,
   levelNumberFrames,
+  timerColor,
 }: LcdScreenProps) {
   const levels = levelsData as Record<string, string[]>;
 
@@ -92,7 +93,7 @@ export default function LcdScreen({
               <div
                 className="rounded"
                 key={index}
-                style={{ background: isOn ? "#324E44" : "transparent" }}
+                style={{ background: isOn ? timerColor : "transparent" }}
               />
             ))}
           </div>

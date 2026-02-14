@@ -168,14 +168,11 @@ export default function GameContainer({ initialLevel }: GameContainerProps) {
   };
 
   const handleMouseDown = () => {
+    dispatch({ type: "SET_HOLDING", isHolding: true });
+
     const timer = setTimeout(() => {
       dispatch({ type: "START_CHALLENGE" });
       startChallengeGame();
-      dispatch({ type: "SET_HOLDING", isHolding: true });
-      const newPieces = calculateDraggablePieces(
-        parseLevel(levels[state.levelNum.toString()]),
-      );
-      dispatch({ type: "RESET_PIECES", pieces: newPieces });
     }, 3000);
 
     dispatch({ type: "SET_PRESS_TIMER", timer });
@@ -223,11 +220,20 @@ export default function GameContainer({ initialLevel }: GameContainerProps) {
   };
 
   const handleLeftClick = () => {
+    if (state.screenState !== "level-preview") {
+      return;
+    }
     const newLevel = Math.max(1, state.levelNum - 1);
     dispatch({ type: "SET_LEVEL", level: newLevel });
   };
 
   const handleRightClick = () => {
+    // Empêcher le changement de niveau si:
+    // - Un hold est en cours (isHolding)
+    // - On n'est PAS sur le level-preview (jeu en cours)
+    if (state.isHolding || state.screenState !== "level-preview") {
+      return;
+    }
     const newLevel = levels[(state.levelNum + 1).toString()]
       ? state.levelNum + 1
       : state.levelNum;
@@ -249,6 +255,7 @@ export default function GameContainer({ initialLevel }: GameContainerProps) {
           finalRating={state.finalRating}
           animationIndex={state.animationIndex}
           levelNumberFrames={state.levelNumberFrames}
+          timerColor={state.timerColor}
         />
         <ControlButtons
           levelNum={state.levelNum}

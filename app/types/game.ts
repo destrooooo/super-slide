@@ -37,3 +37,4 @@ export type GameState = {
 };
 
 export type CellColors = "🟥" | "🟦" | "🟨" | "🟩" | "";
+export type TimerColor = "#f3701e" | "#e8d8c9" | "#324E44";

@@ -37,6 +37,7 @@ export type GameAction =
 
   // Reset complet
   | { type: "RESET_GAME" }
+  | { type: "RESET_CHALLENGE" }
 
   // Gestion des animations shake
   | { type: "SHAKE_PIECE"; id: number; direction: "x" | "y" }

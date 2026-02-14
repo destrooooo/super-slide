@@ -36,8 +36,8 @@ export default function GameGrid({
       <div
         className="absolute bg-[#f3701e] rounded-xl bottom-2 left-1/2 -translate-x-1/2 opacity-20 z-0"
         style={{
-          width: `calc(${cellSize.width * 2}px - 0.5rem)`,
-          height: `calc(${cellSize.height * 2}px - 0.5rem)`,
+          width: `calc(${cellSize.width * 2}px)`,
+          height: `calc(${cellSize.height * 2}px)`,
         }}
       ></div>
       {pieces.map((piece) => (

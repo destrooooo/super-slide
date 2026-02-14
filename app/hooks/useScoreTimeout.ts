@@ -25,10 +25,15 @@ export function useScoreTimeout(
     }
 
     const timeout = setTimeout(() => {
-      // Une seule action dispatch pour tout réinitialiser
-      dispatch({ type: "RESET_GAME" });
+      // Dispatch RESET_CHALLENGE si on est en mode challenge
+      // Sinon dispatch RESET_GAME (comportement normal)
+      if (state.isChallengeMode) {
+        dispatch({ type: "RESET_CHALLENGE" });
+      } else {
+        dispatch({ type: "RESET_GAME" });
+      }
     }, 3000);
 
     return () => clearTimeout(timeout);
-  }, [state.screenState, dispatch]);
+  }, [state.screenState, state.isChallengeMode, dispatch]);
 }
