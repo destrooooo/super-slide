@@ -5,7 +5,6 @@ import type { Piece } from "../types/game";
 
 type GameGridProps = {
   pieces: Piece[];
-  cellSize: { width: number; height: number };
   shakeId: number | null;
   shakeDirection: "x" | "y" | null;
   onDragEnd: (piece: Piece, info: { offset: { x: number; y: number } }) => void;
@@ -21,7 +20,6 @@ const getPieceBackground = (color: string): string => {
 
 export default function GameGrid({
   pieces,
-  cellSize,
   shakeId,
   shakeDirection,
   onDragEnd,
@@ -30,14 +28,14 @@ export default function GameGrid({
   return (
     <div
       ref={onGridRef}
-      className="relative grid grid-cols-4 grid-rows-5 gap-px w-full bg-neutral-950 p-2 rounded-2xl"
+      className="relative grid grid-cols-4 grid-rows-5 gap-px w-full bg-neutral-950 p-2 max-xs:p-1.5 max-xxs:p-1 [--pad:0.5rem] max-xs:[--pad:0.375rem] max-xxs:[--pad:0.25rem] rounded-2xl max-xs:rounded-xl max-xxs:rounded-md"
       style={{ aspectRatio: "4/5" }}
     >
       <div
-        className="absolute bg-[#f3701e] rounded-xl bottom-2 left-1/2 -translate-x-1/2 opacity-20 z-0"
+        className="absolute bg-[#f3701e] rounded-xl max-xxs:rounded-lg bottom-(--pad) left-1/2 -translate-x-1/2 opacity-20 z-0"
         style={{
-          width: `calc(${cellSize.width * 2}px)`,
-          height: `calc(${cellSize.height * 2}px)`,
+          width: `calc((100% - var(--pad) * 2) / 2)`,
+          height: `calc((100% - var(--pad) * 2) * 2 / 5)`,
         }}
       ></div>
       {pieces.map((piece) => (
@@ -61,7 +59,7 @@ export default function GameGrid({
             gridArea: piece.area,
             background: getPieceBackground(piece.color),
           }}
-          className="card rounded-xl z-1 drop-shadow-lg cursor-grab"
+          className="card rounded-xl max-xxs:rounded-lg z-1 drop-shadow-lg cursor-grab"
           data-id={piece.id}
         ></motion.div>
       ))}

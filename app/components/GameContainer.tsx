@@ -246,7 +246,7 @@ export default function GameContainer({ initialLevel }: GameContainerProps) {
 
   return (
     <>
-      <div className="flex flex-row">
+      <div className="flex flex-row justify-start w-full aspect-[3/1]">
         <LcdScreen
           screenState={state.screenState}
           levelNum={state.levelNum}

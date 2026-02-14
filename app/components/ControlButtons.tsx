@@ -19,6 +19,11 @@ type ControlButtonsProps = {
   onRedMouseLeave: () => void;
 };
 
+const buttonSize = {
+  height: "50cqh",
+  width: "calc(50cqh * 44 / 58)",
+} as const;
+
 export default function ControlButtons({
   onLeftClick,
   onRightClick,
@@ -31,36 +36,55 @@ export default function ControlButtons({
   onRedMouseLeave,
 }: ControlButtonsProps) {
   return (
-    <div className="flex flex-row w-full justify-center gap-3 items-center text-[#e8d8c9]">
+    <div
+      className="grid grid-flow-col auto-cols-auto px-3  justify-evenly w-2/3 h-full text-[#e8d8c9] text-xs max-xxs:text-[10px] text-nowrap"
+      style={{ containerType: "size" }}
+    >
       <div className="relative flex flex-col h-full items-center justify-center">
-        <CaretLeftIcon size={16} weight="fill" className="absolute top-6" />
+        <CaretLeftIcon
+          weight="fill"
+          className="absolute top-1/10 h-4 max-xxs:top-2 max-xxs:h-fit"
+        />
         <button
-          className="relative h-14 aspect-44/58 rounded-xl bg-[#4b607f] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
+          className="rounded-lg max-xxs:rounded-md bg-[#4b607f] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
+          style={buttonSize}
           onClick={onLeftClick}
         ></button>
-        <p className="absolute bottom-6 h-4 text-xs">L</p>
+        <p className="absolute bottom-1/10 h-4 max-xxs:bottom-2 max-xxs:h-fit">
+          L
+        </p>
       </div>
       <div className="relative flex flex-col h-full items-center justify-center">
-        <CaretRightIcon size={16} weight="fill" className="absolute top-6" />
+        <CaretRightIcon
+          weight="fill"
+          className="absolute top-1/10 h-4 max-xxs:top-2 max-xxs:h-fit"
+        />
         <button
-          className="aspect-44/58 h-14 rounded-xl bg-[#4b607f] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
+          className="rounded-lg max-xxs:rounded-md bg-[#4b607f] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
+          style={buttonSize}
           onClick={onRightClick}
           onMouseDown={onRightMouseDown}
           onMouseUp={onRightMouseUp}
           onMouseLeave={onRightMouseLeave}
         ></button>
-        <p className="absolute bottom-6 h-4 text-xs">C</p>
+        <p className="absolute bottom-1/10 h-4 max-xxs:bottom-2 max-xxs:h-fit">
+          C
+        </p>
       </div>
       <div className="relative flex flex-col h-full items-center justify-center">
-        <CircleIcon size={16} weight="bold" className="absolute top-6" />
+        <CircleIcon
+          weight="bold"
+          className="absolute top-1/10 h-4 max-xxs:top-2 max-xxs:h-fit"
+        />
         <button
-          className="aspect-44/58 h-14 rounded-xl bg-[#f3701e] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
+          className="rounded-lg max-xxs:rounded-md bg-[#f3701e] drop-shadow-xl active:scale-95 hover:scale-101 ease-in-out duration-75"
+          style={buttonSize}
           onClick={onRedClick}
           onMouseDown={onRedMouseDown}
           onMouseLeave={onRedMouseLeave}
           onMouseUp={onRedMouseUp}
         />
-        <p className="absolute bottom-6 h-4 max-w-fit text-xs whitespace-nowrap font-light ">
+        <p className="absolute bottom-1/10 h-4 max-xxs:bottom-2 max-xxs:h-fit">
           ON / OFF
         </p>
       </div>

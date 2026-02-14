@@ -39,16 +39,16 @@ export default function LcdScreen({
   const levels = levelsData as Record<string, string[]>;
 
   return (
-    <div className="flex flex-row">
-      <div className="aspect-square w-38 bg-black rounded-xl py-1.5">
+    <div className="flex flex-row w-1/3">
+      <div className="aspect-square w-full bg-black rounded-xl max-xxs:rounded-lg py-1.5 max-xs:py-1 max-xxs:py-1">
         {/* Animation de victoire */}
         {screenState === "victory" && (
-          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-px max-xxs:gap-px mx-auto">
             {(victoryAnimation as Record<string, string[]>)[
               animationIndex.toString()
             ]?.map((cell, index) => (
               <div
-                className="rounded"
+                className="rounded max-xs:rounded-sm max-xxs:rounded-xs"
                 key={index}
                 style={{ background: getCellBackground(cell) }}
               />
@@ -58,11 +58,11 @@ export default function LcdScreen({
 
         {/* Animation "C" d'entrée en mode challenge */}
         {screenState === "challenge-intro" && (
-          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-px max-xxs:gap-px mx-auto">
             {(challengeAnimation as Record<string, string[]>)["1"].map(
               (cell, index) => (
                 <div
-                  className="rounded"
+                  className="rounded max-xs:rounded-sm max-xxs:rounded-xs"
                   key={index}
                   style={{ background: getCellBackground(cell) }}
                 />
@@ -73,12 +73,12 @@ export default function LcdScreen({
 
         {/* Countdown 3 → 2 → 1 */}
         {screenState === "countdown" && countdownValue && (
-          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-px max-xxs:gap-px mx-auto">
             {(gameTimerAnimation as Record<string, string[]>)[
               countdownValue.toString()
             ]?.map((cell, index) => (
               <div
-                className="rounded"
+                className="rounded max-xs:rounded-sm max-xxs:rounded-xs"
                 key={index}
                 style={{ background: getCellBackground(cell) }}
               />
@@ -88,10 +88,10 @@ export default function LcdScreen({
 
         {/* Grille de LEDs du timer */}
         {screenState === "timer" && (
-          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-px max-xxs:gap-px mx-auto">
             {timerLeds.map((isOn, index) => (
               <div
-                className="rounded"
+                className="rounded max-xs:rounded-sm max-xxs:rounded-xs"
                 key={index}
                 style={{ background: isOn ? timerColor : "transparent" }}
               />
@@ -101,12 +101,12 @@ export default function LcdScreen({
 
         {/* Affichage du score */}
         {screenState === "score" && finalRating && (
-          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-px max-xxs:gap-px mx-auto">
             {(scoreData as Record<string, string[]>)[
               finalRating.toLowerCase()
             ]?.map((cell, index) => (
               <div
-                className="rounded"
+                className="rounded max-xs:rounded-sm max-xxs:rounded-xs"
                 key={index}
                 style={{ background: getCellBackground(cell) }}
               />
@@ -116,10 +116,10 @@ export default function LcdScreen({
 
         {/* Preview du niveau (par défaut) */}
         {screenState === "level-preview" && (
-          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-px max-xxs:gap-px mx-auto">
             {levels[levelNum.toString()]?.map((cell, index) => (
               <div
-                className="rounded"
+                className="rounded max-xs:rounded-sm max-xxs:rounded-xs"
                 key={index}
                 style={{ background: getCellBackground(cell) }}
               />
@@ -129,10 +129,10 @@ export default function LcdScreen({
 
         {/* Animation levelNumber */}
         {screenState === "level-number" && (
-          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-0.5 mx-auto">
+          <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-px max-xxs:gap-px mx-auto">
             {levelNumberFrames[animationIndex]?.map((cell, index) => (
               <div
-                className="rounded"
+                className="rounded max-xs:rounded-sm max-xxs:rounded-xs"
                 key={index}
                 style={{ background: getCellBackground(cell) }}
               />
