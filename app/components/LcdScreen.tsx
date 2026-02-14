@@ -40,7 +40,12 @@ export default function LcdScreen({
 
   return (
     <div className="flex flex-row w-1/3">
-      <div className="aspect-square w-full bg-black rounded-xl max-xxs:rounded-lg py-1.5 max-xs:py-1 max-xxs:py-1">
+      <div
+        className="aspect-square w-full bg-black rounded-xl max-xxs:rounded-lg py-1.5 max-xs:py-1 max-xxs:py-1"
+        style={{
+          boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.8), inset 0 0 2px rgba(0,0,0,0.5)',
+        }}
+      >
         {/* Animation de victoire */}
         {screenState === "victory" && (
           <div className="grid grid-cols-4 grid-rows-5 h-full aspect-4/5 gap-px max-xxs:gap-px mx-auto">

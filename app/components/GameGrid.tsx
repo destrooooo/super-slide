@@ -29,7 +29,10 @@ export default function GameGrid({
     <div
       ref={onGridRef}
       className="relative grid grid-cols-4 grid-rows-5 gap-px w-full bg-neutral-950 p-2 max-xs:p-1.5 max-xxs:p-1 [--pad:0.5rem] max-xs:[--pad:0.375rem] max-xxs:[--pad:0.25rem] rounded-2xl max-xs:rounded-xl max-xxs:rounded-md"
-      style={{ aspectRatio: "4/5" }}
+      style={{
+        aspectRatio: "4/5",
+        boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.6)',
+      }}
     >
       <div
         className="absolute bg-[#f3701e] rounded-xl max-xxs:rounded-lg bottom-(--pad) left-1/2 -translate-x-1/2 opacity-20 z-0"
@@ -58,8 +61,12 @@ export default function GameGrid({
           style={{
             gridArea: piece.area,
             background: getPieceBackground(piece.color),
+            boxShadow: `
+              inset 0 1px 1px rgba(255,255,255,0.25),
+              inset 0 -1px 1px rgba(0,0,0,0.15)
+            `,
           }}
-          className="card rounded-xl max-xxs:rounded-lg z-1 drop-shadow-lg cursor-grab"
+          className="card rounded-xl max-xxs:rounded-lg z-1 cursor-grab"
           data-id={piece.id}
         ></motion.div>
       ))}

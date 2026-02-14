@@ -51,6 +51,16 @@ export default function GameContainer({ initialLevel }: GameContainerProps) {
     dispatch({ type: "MOUNT" });
   }, []);
 
+  // Auto-start après victoire en mode normal
+  useEffect(() => {
+    if (state.screenState === "level-preview" && state.isWin && !state.isChallengeMode) {
+      const newPieces = calculateDraggablePieces(
+        parseLevel(levels[state.levelNum.toString()]),
+      );
+      dispatch({ type: "RESET_PIECES", pieces: newPieces });
+    }
+  }, [state.screenState, state.isWin, state.isChallengeMode, state.levelNum, levels]);
+
   // Effet pour calculer la taille des cellules
   useEffect(() => {
     if (gridRef.current) {
@@ -246,7 +256,7 @@ export default function GameContainer({ initialLevel }: GameContainerProps) {
 
   return (
     <>
-      <div className="flex flex-row justify-start w-full aspect-[3/1]">
+      <div className="flex flex-row justify-start w-full aspect-3/1">
         <LcdScreen
           screenState={state.screenState}
           levelNum={state.levelNum}
@@ -272,7 +282,6 @@ export default function GameContainer({ initialLevel }: GameContainerProps) {
       </div>
       <GameGrid
         pieces={state.pieces}
-        cellSize={state.cellSize}
         shakeId={state.shakeId}
         shakeDirection={state.shakeDirection}
         onDragEnd={handleDragEnd}
