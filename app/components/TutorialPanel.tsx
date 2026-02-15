@@ -130,9 +130,48 @@ function InlinePiece({
   );
 }
 
+function CreditsBar({ className = "" }: { className?: string }) {
+  return (
+    <div
+      className={[
+        "text-xs text-[#e8d8c9]/70",
+        "bg-zinc-900/80 backdrop-blur",
+        "border border-white/10 rounded-xl",
+        "px-3 py-2",
+        className,
+      ].join(" ")}
+    >
+      <div className="flex flex-wrap place-content-between items-center gap-x-2 gap-y-1">
+        <span className="flex flex-row gap-0">
+          <p> Created by&nbsp;</p>
+          <a
+            href="https://github.com/destrooooo"
+            target="_blank"
+            rel="noreferrer"
+            className="underline decoration-white/20 hover:decoration-white/60 hover:text-[#e8d8c9] transition-colors"
+          >
+            destro
+          </a>
+        </span>
+        <span className="flex flex-row gap-0">
+          <p> Game inspired by&nbsp;</p>
+          <a
+            href="https://shop-giiker.myshopify.com/en-fr/products/super-slide?srsltid=AfmBOorN9GdHmdg39lQiQdBiNWjTbUZmztMZgldqQCwSScgelvdK5NK5"
+            target="_blank"
+            rel="noreferrer"
+            className="underline decoration-white/20 hover:decoration-white/60 hover:text-[#e8d8c9] transition-colors"
+          >
+            Giiker Super Slide
+          </a>
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function PanelContent({ onClose }: { onClose: () => void }) {
   return (
-    <>
+    <div className="relative min-h-full">
       {/* Header */}
       <div className="sticky top-0 bg-zinc-800 z-10 flex items-center justify-between p-4 pb-2 border-b border-white/10">
         <h2 className="text-lg font-bold text-[#f3701e]">Comment jouer</h2>
@@ -144,7 +183,8 @@ function PanelContent({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      <div className="p-4 space-y-5 text-sm leading-relaxed">
+      {/* Contenu */}
+      <div className="p-4 pb-6 lg:pb-24 space-y-5 text-sm leading-relaxed">
         {/* But du jeu */}
         <section>
           <h3 className="font-semibold text-[#f3701e] mb-2">But du jeu</h3>
@@ -206,6 +246,9 @@ function PanelContent({ onClose }: { onClose: () => void }) {
               }
               label="Niveau précédent"
             />
+            <div className="pl-10 text-xs text-[#e8d8c9]/60">
+              Appui long → sauvegarde le dernier niveau sélectionné
+            </div>
             <MiniButton
               color="#4b607f"
               icon={
@@ -261,9 +304,19 @@ function PanelContent({ onClose }: { onClose: () => void }) {
           </ul>
         </section>
 
+        {/* Mobile: crédits en fin de contenu */}
+        <div className="pt-2 lg:hidden">
+          <CreditsBar />
+        </div>
+
         <div className="h-4" />
       </div>
-    </>
+
+      {/* Desktop: crédits en absolute bottom, le texte peut passer dessous */}
+      <div className="hidden lg:block absolute bottom-4 left-4 right-4 pointer-events-auto">
+        <CreditsBar />
+      </div>
+    </div>
   );
 }
 

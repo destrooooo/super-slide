@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import useSWR, { mutate } from "swr";
+import { useState, useDeferredValue } from "react";
 import {
   fetchLevelLeaderboard,
   fetchPlayerRuns,
   searchPlayers,
+  fetchPlayerById,
 } from "../lib/score";
 import { useAuth } from "../hooks";
 import { signOut } from "../lib/auth";
@@ -49,78 +51,90 @@ export default function Leaderboard({ onOpenAuth }: LeaderboardProps) {
   const [tab, setTab] = useState<Tab>("level");
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [levelInput, setLevelInput] = useState("1");
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [playerRuns, setPlayerRuns] = useState<PlayerRun[]>([]);
-  const [loading, setLoading] = useState(false);
 
   // Compare state
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<PlayerResult[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerResult | null>(
     null,
   );
-  const [otherRuns, setOtherRuns] = useState<PlayerRun[]>([]);
-  const [myRuns, setMyRuns] = useState<PlayerRun[]>([]);
-  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+  const levelKey = tab === "level" ? ["leaderboard", selectedLevel] : null;
 
-  useEffect(() => {
-    if (tab === "level") {
-      setLoading(true);
-      fetchLevelLeaderboard(selectedLevel)
-        .then(setLeaderboard)
-        .catch(() => setLeaderboard([]))
-        .finally(() => setLoading(false));
-    }
-  }, [tab, selectedLevel]);
+  const myPlayerKey = user ? ["player", user.id] : null;
 
-  useEffect(() => {
-    if (tab === "profile" && user) {
-      setLoading(true);
-      fetchPlayerRuns(user.id)
-        .then(setPlayerRuns)
-        .catch(() => setPlayerRuns([]))
-        .finally(() => setLoading(false));
-    }
-  }, [tab, user]);
+  const { data: me } = useSWR<{ id: string; username: string }>(
+    myPlayerKey,
+    () => fetchPlayerById(user!.id),
+    { revalidateOnFocus: true },
+  );
 
-  // Debounced search
-  useEffect(() => {
-    if (tab !== "compare" || searchQuery.length < 2) {
-      setSearchResults([]);
-      return;
-    }
+  const myDisplayName = me?.username ?? user?.email ?? "";
 
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    searchTimeout.current = setTimeout(() => {
-      searchPlayers(searchQuery)
-        .then(setSearchResults)
-        .catch(() => setSearchResults([]));
-    }, 300);
+  const {
+    data: leaderboard = [],
+    isLoading: loadingLevel,
+    error: levelError,
+  } = useSWR<LeaderboardEntry[]>(
+    levelKey,
+    () => fetchLevelLeaderboard(selectedLevel),
+    {
+      refreshInterval: 15000,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 2000,
+      keepPreviousData: true,
+    },
+  );
 
-    return () => {
-      if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    };
-  }, [tab, searchQuery]);
+  //profile runs
+  const profileKey = tab === "profile" && user ? ["playerRuns", user.id] : null;
 
-  // Load both players' runs when a player is selected
-  useEffect(() => {
-    if (!selectedPlayer) return;
+  const {
+    data: playerRuns = [],
+    isLoading: loadingProfile,
+    error: profileError,
+  } = useSWR<PlayerRun[]>(profileKey, () => fetchPlayerRuns(user!.id), {
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+  });
 
-    setLoading(true);
-    const promises = [fetchPlayerRuns(selectedPlayer.id)];
-    if (user) promises.push(fetchPlayerRuns(user.id));
+  //compare search
+  const deferredQuery = useDeferredValue(searchQuery.trim());
+  const searchKey =
+    tab === "compare" && deferredQuery.length >= 2
+      ? (["searchPlayers", deferredQuery] as const)
+      : null;
 
-    Promise.all(promises)
-      .then(([other, mine]) => {
-        setOtherRuns(other);
-        setMyRuns(mine ?? []);
-      })
-      .catch(() => {
-        setOtherRuns([]);
-        setMyRuns([]);
-      })
-      .finally(() => setLoading(false));
-  }, [selectedPlayer, user]);
+  const { data: searchResults = [] } = useSWR<PlayerResult[]>(
+    searchKey,
+    () => searchPlayers(deferredQuery),
+    { keepPreviousData: true, dedupingInterval: 300 },
+  );
+
+  //compare runs
+  const otherRunsKey =
+    tab === "compare" && selectedPlayer ? ["runs", selectedPlayer.id] : null;
+
+  const myRunsKey =
+    tab === "compare" && selectedPlayer && user ? ["runs", user.id] : null;
+
+  const {
+    data: otherRuns = [],
+    isLoading: loadingOther,
+    error: otherError,
+  } = useSWR(otherRunsKey, () => fetchPlayerRuns(selectedPlayer!.id), {
+    revalidateOnFocus: true,
+  });
+
+  const {
+    data: myRuns = [],
+    isLoading: loadingMine,
+    error: myError,
+  } = useSWR(myRunsKey, () => fetchPlayerRuns(user!.id), {
+    revalidateOnFocus: true,
+  });
+
+  const loadingCompare = loadingOther || loadingMine;
+  const compareError = otherError || myError;
 
   // Build comparison data
   const comparisonLevels = () => {
@@ -138,7 +152,7 @@ export default function Leaderboard({ onOpenAuth }: LeaderboardProps) {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-2 min-h-[706px]">
+    <div className="flex flex-col gap-4 p-2">
       {/* Onglets */}
       <div className="flex gap-1.5 justify-center">
         {(["level", "profile", "compare"] as Tab[]).map((t) => (
@@ -176,7 +190,7 @@ export default function Leaderboard({ onOpenAuth }: LeaderboardProps) {
             >
               ◀
             </button>
-            <div className="flex items-center gap-1.5 min-w-[100px] justify-center">
+            <div className="flex items-center gap-1.5 min-w-25 justify-center">
               <span className="text-white font-bold text-lg">Niveau</span>
               <input
                 type="text"
@@ -219,11 +233,21 @@ export default function Leaderboard({ onOpenAuth }: LeaderboardProps) {
             >
               ▶
             </button>
+            <button
+              onClick={() => mutate(["leaderboard", selectedLevel])}
+              className="text-zinc-400 hover:text-white text-xs px-2"
+            >
+              Rafraîchir
+            </button>
           </div>
 
-          {loading ? (
+          {loadingLevel ? (
             <p className="text-zinc-500 text-center text-sm py-4">
               Chargement...
+            </p>
+          ) : levelError ? (
+            <p className="text-zinc-500 text-center text-sm py-4">
+              Erreur de chargement
             </p>
           ) : leaderboard.length === 0 ? (
             <p className="text-zinc-500 text-center text-sm py-4">
@@ -290,7 +314,11 @@ export default function Leaderboard({ onOpenAuth }: LeaderboardProps) {
                 Se connecter / S&apos;inscrire
               </button>
             </div>
-          ) : loading ? (
+          ) : profileError ? (
+            <p className="text-zinc-500 text-center text-sm py-4">
+              Erreur de chargement
+            </p>
+          ) : loadingProfile ? (
             <p className="text-zinc-500 text-center text-sm py-4">
               Chargement...
             </p>
@@ -322,9 +350,9 @@ export default function Leaderboard({ onOpenAuth }: LeaderboardProps) {
           )}
 
           {user && (
-            <div className="mt-auto pt-4 flex items-center justify-between">
+            <div className="absolute bottom-4 self-center w-9/10 flex items-center justify-between ">
               <span className="text-zinc-500 text-xs truncate">
-                {user.email}
+                {myDisplayName}
               </span>
               <button
                 onClick={() => signOut()}
@@ -377,7 +405,6 @@ export default function Leaderboard({ onOpenAuth }: LeaderboardProps) {
                     onClick={() => {
                       setSelectedPlayer(p);
                       setSearchQuery(p.username);
-                      setSearchResults([]);
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700 transition-colors"
                   >
@@ -389,13 +416,13 @@ export default function Leaderboard({ onOpenAuth }: LeaderboardProps) {
           </div>
 
           {/* Vue comparaison */}
-          {selectedPlayer && !loading && (
+          {selectedPlayer && !loadingCompare && (
             <>
               {/* En-tête des colonnes */}
               <div className="flex items-center justify-between px-3 pb-1">
                 <span className="text-zinc-500 text-xs w-16">Niveau</span>
                 <span className="text-[#f3701e] text-xs font-medium flex-1 text-center">
-                  {selectedPlayer.username}
+                  {selectedPlayer?.username ?? ""}
                 </span>
                 <span className="text-blue-400 text-xs font-medium flex-1 text-center">
                   {user ? "Moi" : "—"}
@@ -457,9 +484,15 @@ export default function Leaderboard({ onOpenAuth }: LeaderboardProps) {
             </>
           )}
 
-          {selectedPlayer && loading && (
+          {selectedPlayer && loadingCompare && (
             <p className="text-zinc-500 text-center text-sm py-4">
               Chargement...
+            </p>
+          )}
+
+          {selectedPlayer && compareError && (
+            <p className="text-zinc-500 text-center text-sm py-4">
+              Erreur de chargement
             </p>
           )}
 

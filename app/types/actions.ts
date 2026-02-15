@@ -25,9 +25,8 @@ export type GameAction =
   | { type: "MOVE_PIECE"; pieces: Piece[] }
   | { type: "RESET_PIECES"; pieces: Piece[] }
 
-  // Victoire et défaite
+  // Victoire
   | { type: "WIN_GAME"; pieces: Piece[]; rating: Rating | null }
-  | { type: "LOSE_GAME" }
 
   // Animation de victoire
   | { type: "ANIMATION_TICK" } // Gère index + cycle + transition atomiquement
@@ -50,5 +49,4 @@ export type GameAction =
   | { type: "STOP_CHALLENGE_MODE" }
 
   // Gestion du timer de pression
-  | { type: "SET_PRESS_TIMER"; timer: NodeJS.Timeout | null }
   | { type: "SET_HOLDING"; isHolding: boolean };

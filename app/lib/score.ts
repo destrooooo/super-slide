@@ -33,3 +33,14 @@ export async function searchPlayers(query: string) {
   if (error) throw error;
   return data ?? [];
 }
+
+export async function fetchPlayerById(playerId: string) {
+  const { data, error } = await supabase
+    .from("players")
+    .select("id, username")
+    .eq("id", playerId)
+    .single();
+
+  if (error) throw error;
+  return data; // { id, username }
+}

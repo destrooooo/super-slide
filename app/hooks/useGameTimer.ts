@@ -5,19 +5,10 @@ import type { GameAction } from "../types/actions";
 
 /**
  * Hook pour gérer le timer du jeu en mode challenge
- *
- * Remplace l'effet complexe des lignes 231-259 du code original
- * qui avait le problème de setState imbriqués
- *
- * Avantages :
- * - Une seule action TIMER_TICK au lieu de 3-4 setState
- * - Le reducer gère atomiquement : timer + LEDs + condition de défaite
- * - Plus de setState dans setState
- * - Plus simple à tester
  */
 export function useGameTimer(
   state: GameState,
-  dispatch: Dispatch<GameAction>
+  dispatch: Dispatch<GameAction>,
 ): void {
   useEffect(() => {
     // Ne démarre le timer que si on est en mode "timer" et que le jeu n'est pas terminé

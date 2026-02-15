@@ -1,6 +1,8 @@
 import type { Piece, ScreenState, Rating, TimerColor } from "../types/game";
 import type { GameAction } from "../types/actions";
 import { generateLevelNumberFrames } from "../utils/level-animation";
+import levelsData from "../data/levels.json";
+import { devLog } from "../utils/devLog";
 
 const CYCLES_TO_PLAY = 2;
 
@@ -15,7 +17,6 @@ export interface GameState {
   screenState: ScreenState;
   isChallengeMode: boolean;
   isWin: boolean;
-  isLose: boolean;
   gameTimer: number;
   timerLeds: boolean[];
   timerColor: TimerColor;
@@ -26,7 +27,6 @@ export interface GameState {
   cellSize: { width: number; height: number };
   shakeId: number | null;
   shakeDirection: "x" | "y" | null;
-  pressTimer: NodeJS.Timeout | null; //déclencher des rendus pour rien, utiliser un UseRef à la place
   isHolding: boolean;
   levelNumberFrames: string[][];
 }
@@ -34,21 +34,14 @@ export interface GameState {
 /**
  * Reducer principal du jeu
  * Gère toutes les transitions d'état de manière atomique
- *
- * Avantages :
- * - Élimine les setState imbriqués
- * - Réduit les re-renders en cascade
- * - Rend les transitions d'état explicites
- * - Facilite le debugging
  */
 export function gameReducer(state: GameState, action: GameAction): GameState {
-  console.log(
+  devLog(
     `🟡 Action: ${action.type} | screenState actuel: ${state.screenState}`,
   );
   switch (action.type) {
     case "MOUNT":
-      // Fix ligne 28 : plus de setState dans effet
-      console.log("🔵 MOUNT -> screenState: level-number");
+      devLog("🔵 MOUNT -> screenState: level-number");
       return {
         ...state,
         isMounted: true,
@@ -57,11 +50,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case "SET_LEVEL":
-      console.log("🔵 SET_LEVEL -> screenState: level-number");
+      devLog("🔵 SET_LEVEL -> screenState: level-number");
       return {
         ...state,
         levelNum: action.level,
-        isWin: false, // Reset victoire au changement de niveau
+        isWin: false,
         levelNumberFrames: generateLevelNumberFrames(action.level),
         screenState: "level-number",
         animationIndex: 0,
@@ -74,14 +67,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case "SET_CHALLENGE_INTRO":
-      console.log("🔵 SET_CHALLENGE_INTRO -> screenState: challenge-intro");
+      devLog("🔵 SET_CHALLENGE_INTRO -> screenState: challenge-intro");
       return {
         ...state,
         screenState: "challenge-intro",
       };
 
     case "START_COUNTDOWN":
-      console.log("🔵 START_COUNTDOWN -> screenState: countdown");
+      devLog("🔵 START_COUNTDOWN -> screenState: countdown");
       return {
         ...state,
         screenState: "countdown",
@@ -95,7 +88,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case "START_TIMER":
-      console.log("🔵 START_TIMER -> screenState: timer");
+      devLog("🔵 START_TIMER -> screenState: timer");
       return {
         ...state,
         timerColor: "#324E44",
@@ -115,7 +108,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             ? Math.floor(newTime - 20)
             : newTime <= 60
               ? Math.floor(newTime - 40)
-              : 20; // toutes éteintes après 60s
+              : 20;
       const timerColor =
         newTime <= 20 ? "#324E44" : newTime <= 40 ? "#e8d8c9" : "#f3701e";
 
@@ -131,11 +124,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         pieces: action.pieces,
-        // isWin: false,
       };
 
     case "RESET_PIECES":
-      console.log("🔵 RESET_PIECES -> screenState: level-preview");
+      devLog("🔵 RESET_PIECES -> screenState: level-preview");
       return {
         ...state,
         pieces: action.pieces,
@@ -146,9 +138,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case "WIN_GAME": {
-      // Fix ligne 158 : transition de victoire atomique
-      // Plus besoin d'un useEffect qui écoute isWin
-      console.log("🔵 WIN_GAME -> screenState: victory");
+      devLog("🔵 WIN_GAME -> screenState: victory");
       return {
         ...state,
         pieces: action.pieces,
@@ -158,20 +148,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case "LOSE_GAME":
-      console.log("🔵 LOSE_GAME -> screenState: score");
-      return {
-        ...state,
-        isLose: true,
-        screenState: "score",
-        finalRating: "f",
-      };
-
     case "LEVEL_NUMBER_TICK": {
       const nextIndex = state.animationIndex + 1;
 
       if (nextIndex >= state.levelNumberFrames.length) {
-        console.log(
+        devLog(
           "🔵 LEVEL_NUMBER_TICK -> screenState: level-preview (animation terminée)",
         );
         return {
@@ -188,19 +169,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "ANIMATION_TICK": {
-      // Fix lignes 170-209 : cycle + index + transition en une seule action
-      // Plus d'effets en cascade !
       const nextIndex = (state.animationIndex + 1) % 10;
       const nextCycle =
         nextIndex === 0 ? state.animationCycle + 1 : state.animationCycle;
 
-      // Si animation terminée, transition automatique
       if (nextCycle >= CYCLES_TO_PLAY) {
         if (state.isChallengeMode) {
-          // Mode challenge : vers l'écran de score
-          console.log(
-            "🔵 ANIMATION_TICK -> screenState: score (challenge mode)",
-          );
+          devLog("🔵 ANIMATION_TICK -> screenState: score (challenge mode)");
           return {
             ...state,
             animationIndex: nextIndex,
@@ -208,11 +183,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             screenState: "score",
           };
         } else {
-          // Mode normal : retour au level preview du niveau suivant
           const nextLevel = state.levelNum + 1;
-          const hasNextLevel = nextLevel <= 100; // Il y a 100 niveaux au total
+          const hasNextLevel = nextLevel <= Object.keys(levelsData).length;
 
-          console.log(
+          devLog(
             "🔵 ANIMATION_TICK -> screenState: level-number (mode normal, niveau suivant)",
           );
           return {
@@ -237,14 +211,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "RESET_GAME":
-      // Remplace le timeout avec 10 setState (lignes 212-228)
-      console.log("🔵 RESET_GAME -> screenState: level-preview");
+      devLog("🔵 RESET_GAME -> screenState: level-preview");
       return {
         ...state,
         screenState: "level-preview",
         isChallengeMode: false,
         isWin: false,
-        isLose: false,
         animationCycle: 0,
         animationIndex: 0,
         finalRating: null,
@@ -254,8 +226,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case "RESET_CHALLENGE":
-      // Reset tout SAUF isChallengeMode (reste true)
-      console.log(
+      devLog(
         "🔵 RESET_CHALLENGE -> screenState: level-preview (challenge reste actif)",
       );
       return {
@@ -263,7 +234,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         screenState: "level-preview",
         // isChallengeMode reste true
         isWin: false,
-        isLose: false,
         animationCycle: 0,
         timerColor: "#324E44",
         animationIndex: 0,
@@ -301,12 +271,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         isChallengeMode: false,
       };
 
-    case "SET_PRESS_TIMER":
-      return {
-        ...state,
-        pressTimer: action.timer,
-      };
-
     case "SET_HOLDING":
       return {
         ...state,
@@ -332,7 +296,6 @@ export function createInitialGameState(
     screenState: "level-preview",
     isChallengeMode: false,
     isWin: false,
-    isLose: false,
     gameTimer: 0,
     timerLeds: Array(20).fill(true),
     countdownValue: null,
@@ -342,7 +305,6 @@ export function createInitialGameState(
     cellSize: { width: 100, height: 100 },
     shakeId: null,
     shakeDirection: null,
-    pressTimer: null,
     isHolding: false,
     levelNumberFrames: generateLevelNumberFrames(initialLevel),
     timerColor: "#324E44",

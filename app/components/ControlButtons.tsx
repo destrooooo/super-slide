@@ -17,6 +17,9 @@ type ControlButtonsProps = {
   onRedMouseDown: () => void;
   onRedMouseUp: () => void;
   onRedMouseLeave: () => void;
+  onLeftMouseDown: () => void;
+  onLeftMouseUp: () => void;
+  onLeftMouseLeave: () => void;
 };
 
 const buttonSize = {
@@ -34,6 +37,9 @@ export default function ControlButtons({
   onRedMouseDown,
   onRedMouseUp,
   onRedMouseLeave,
+  onLeftMouseDown,
+  onLeftMouseUp,
+  onLeftMouseLeave,
 }: ControlButtonsProps) {
   return (
     <div
@@ -54,6 +60,11 @@ export default function ControlButtons({
             borderBottom: "2px solid rgba(0,0,0,0.2)",
           }}
           onClick={onLeftClick}
+          onMouseDown={onLeftMouseDown}
+          onMouseUp={onLeftMouseUp}
+          onMouseLeave={onLeftMouseLeave}
+          onTouchStart={onLeftMouseDown}
+          onTouchEnd={onLeftMouseUp}
         ></button>
         <p className="absolute bottom-1/10 h-4 max-xxs:bottom-2 max-xxs:h-fit">
           SAVE

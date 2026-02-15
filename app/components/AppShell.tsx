@@ -11,7 +11,7 @@ export default function AppShell() {
   return (
     <div className="relative max-w-md w-full">
       <div
-        className="bg-zinc-800 rounded-3xl p-4 w-full flex flex-col gap-4 select-none"
+        className="bg-zinc-800 rounded-3xl p-4 w-full flex flex-col gap-4 select-none aspect-199/313"
         style={{
           boxShadow: `
             0 20px 40px rgba(0,0,0,0.4),

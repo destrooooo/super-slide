@@ -23,23 +23,51 @@ import {
 } from "../hooks";
 import { useCaptureChallengeResult } from "../hooks/useCaptureChallengeResult";
 import type { PendingRun } from "../lib/pendingRun";
+import { devLog } from "../utils/devLog";
 
 type GameContainerProps = {
   initialLevel: number;
   onChallengeEnd?: (run: PendingRun) => void;
 };
 
-export default function GameContainer({ initialLevel, onChallengeEnd }: GameContainerProps) {
+export default function GameContainer({
+  initialLevel,
+  onChallengeEnd,
+}: GameContainerProps) {
   const levels = levelsData as Record<string, string[]>;
 
+  const initGameState = () => {
+    const raw =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("levelNum")
+        : null;
+    const saved = raw ? Number(raw) : NaN;
+
+    const maxLevel = Object.keys(levels).length;
+    const level = Number.isFinite(saved)
+      ? Math.min(Math.max(1, saved), maxLevel)
+      : initialLevel;
+
+    const pieces = calculateDraggablePieces(
+      parseLevel(levels[level.toString()]),
+    );
+
+    return createInitialGameState(level, pieces);
+  };
+
+  const rightHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const redHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTimer = (ref: {
+    current: ReturnType<typeof setTimeout> | null;
+  }) => {
+    if (ref.current) {
+      clearTimeout(ref.current);
+      ref.current = null;
+    }
+  };
   // Remplace 16 useState par 1 seul useReducer
-  const [state, dispatch] = useReducer(
-    gameReducer,
-    createInitialGameState(
-      initialLevel,
-      calculateDraggablePieces(parseLevel(levels[initialLevel.toString()])),
-    ),
-  );
+  const [state, dispatch] = useReducer(gameReducer, null, initGameState);
 
   // Custom hooks remplacent les effets complexes
   useGameTimer(state, dispatch);
@@ -75,23 +103,29 @@ export default function GameContainer({ initialLevel, onChallengeEnd }: GameCont
     levels,
   ]);
 
-  // Effet pour calculer la taille des cellules
+  // Recalcule la taille des cellules au mount ET au resize
   useEffect(() => {
-    if (gridRef.current) {
-      const rect = gridRef.current.getBoundingClientRect();
+    const grid = gridRef.current;
+    if (!grid) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const rect = entries[0].contentRect;
       dispatch({
         type: "SET_CELL_SIZE",
         width: rect.width / 4,
         height: rect.height / 5,
       });
-    }
+    });
+
+    observer.observe(grid);
+    return () => observer.disconnect();
   }, []);
 
   const handleDragEnd = (
     piece: Piece,
     info: { offset: { x: number; y: number } },
   ) => {
-    console.log(info);
+    devLog(info);
     const direction =
       Math.abs(info.offset.x) > Math.abs(info.offset.y) ? "x" : "y";
 
@@ -111,17 +145,17 @@ export default function GameContainer({ initialLevel, onChallengeEnd }: GameCont
           ? "+"
           : "-";
 
-    console.log(`Direction: ${direction}, Signe: ${sign}`);
+    devLog(`Direction: ${direction}, Signe: ${sign}`);
 
     const maxMove = calculateMaxMove(piece, state.pieces, direction, sign);
-    console.log(`Direction: ${direction}${sign}, Max move: ${maxMove} cases`);
+    devLog(`Direction: ${direction}${sign}, Max move: ${maxMove} cases`);
     const dragDistance = Math.abs(
       direction === "x" ? info.offset.x : info.offset.y,
     );
     const cellDimension =
       direction === "x" ? state.cellSize.width : state.cellSize.height;
 
-    console.log(dragDistance);
+    devLog(dragDistance);
     const intendedCells =
       dragDistance < cellDimension * 0.05
         ? 0
@@ -130,7 +164,7 @@ export default function GameContainer({ initialLevel, onChallengeEnd }: GameCont
           : 1;
 
     const actualMove = Math.min(intendedCells, maxMove);
-    console.log("actual move", actualMove);
+    devLog("actual move", actualMove);
 
     if (intendedCells > 0 && actualMove === 0) {
       dispatch({ type: "SHAKE_PIECE", id: piece.id, direction });
@@ -156,7 +190,9 @@ export default function GameContainer({ initialLevel, onChallengeEnd }: GameCont
       if (redPiece && redPiece.area === "4 / 2 / 6 / 4" && !state.isWin) {
         // Calcul du score UNIQUEMENT en mode challenge
         const rating = state.isChallengeMode
-          ? (state.gameTimer > 60 ? "f" : calculateRating(state.gameTimer))
+          ? state.gameTimer > 60
+            ? "f"
+            : calculateRating(state.gameTimer)
           : null;
         dispatch({ type: "WIN_GAME", pieces: newPieces, rating });
       } else {
@@ -195,41 +231,83 @@ export default function GameContainer({ initialLevel, onChallengeEnd }: GameCont
   const handleMouseDown = () => {
     dispatch({ type: "SET_HOLDING", isHolding: true });
 
-    const timer = setTimeout(() => {
+    clearTimer(rightHoldTimerRef);
+    rightHoldTimerRef.current = setTimeout(() => {
       dispatch({ type: "START_CHALLENGE" });
       startChallengeGame();
     }, 3000);
-
-    dispatch({ type: "SET_PRESS_TIMER", timer });
   };
 
   const handleMouseUp = () => {
-    if (state.pressTimer) {
-      clearTimeout(state.pressTimer);
-      dispatch({ type: "SET_PRESS_TIMER", timer: null });
+    clearTimer(rightHoldTimerRef);
+    dispatch({ type: "SET_HOLDING", isHolding: false });
+  };
+
+  const longPressTriggeredRef = useRef(false);
+  const suppressNextLeftClickRef = useRef(false);
+
+  const saveLevelToLocalStorage = (level: number) => {
+    localStorage.setItem("levelNum", String(level));
+  };
+
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      clearTimer(rightHoldTimerRef);
+      clearTimer(redHoldTimerRef);
+      clearTimer(pressTimerRef);
+    };
+  }, []);
+
+  //trigger save level on local Storage
+  const handleLeftMouseDown = () => {
+    dispatch({ type: "SET_HOLDING", isHolding: true });
+
+    longPressTriggeredRef.current = false;
+
+    pressTimerRef.current = setTimeout(() => {
+      saveLevelToLocalStorage(state.levelNum);
+      devLog("level sauvegardé");
+
+      longPressTriggeredRef.current = true;
+    }, 3000);
+  };
+
+  const clearPressTimer = () => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+
+    if (longPressTriggeredRef.current) {
+      suppressNextLeftClickRef.current = true;
+      longPressTriggeredRef.current = false;
+
+      setTimeout(() => {
+        suppressNextLeftClickRef.current = false;
+      }, 0);
     }
 
     dispatch({ type: "SET_HOLDING", isHolding: false });
   };
 
   const stopChallengemode = () => {
-    if (state.isChallengeMode) {
-      const timer = setTimeout(() => {
-        dispatch({ type: "STOP_CHALLENGE_MODE" });
-        dispatch({ type: "SET_HOLDING", isHolding: true });
-        console.log("mode de jeu normal");
-      }, 3000);
-      dispatch({ type: "SET_PRESS_TIMER", timer });
-    }
+    if (!state.isChallengeMode) return;
+
+    dispatch({ type: "SET_HOLDING", isHolding: true });
+
+    clearTimer(redHoldTimerRef);
+    redHoldTimerRef.current = setTimeout(() => {
+      dispatch({ type: "STOP_CHALLENGE_MODE" });
+      dispatch({ type: "SET_HOLDING", isHolding: false });
+      devLog("mode de jeu normal");
+    }, 3000);
   };
 
   const handleMouseUpStopChallenge = () => {
-    if (state.pressTimer) {
-      clearTimeout(state.pressTimer);
-      dispatch({ type: "SET_PRESS_TIMER", timer: null });
-    }
+    clearTimer(redHoldTimerRef);
     dispatch({ type: "SET_HOLDING", isHolding: false });
-    console.log("handleMouseUpStopChallenge triggered");
   };
 
   const redButtonOnClickHandler = () => {
@@ -245,7 +323,12 @@ export default function GameContainer({ initialLevel, onChallengeEnd }: GameCont
   };
 
   const handleLeftClick = () => {
-    if (state.screenState !== "level-preview") {
+    if (suppressNextLeftClickRef.current) return;
+    if (
+      state.isHolding ||
+      (state.screenState !== "level-preview" &&
+        state.screenState !== "level-number")
+    ) {
       return;
     }
     const newLevel = Math.max(1, state.levelNum - 1);
@@ -256,7 +339,11 @@ export default function GameContainer({ initialLevel, onChallengeEnd }: GameCont
     // Empêcher le changement de niveau si:
     // - Un hold est en cours (isHolding)
     // - On n'est PAS sur le level-preview (jeu en cours)
-    if (state.isHolding || state.screenState !== "level-preview") {
+    if (
+      state.isHolding ||
+      (state.screenState !== "level-preview" &&
+        state.screenState !== "level-number")
+    ) {
       return;
     }
     const newLevel = levels[(state.levelNum + 1).toString()]
@@ -293,6 +380,9 @@ export default function GameContainer({ initialLevel, onChallengeEnd }: GameCont
           onRedMouseDown={stopChallengemode}
           onRedMouseUp={handleMouseUpStopChallenge}
           onRedMouseLeave={handleMouseUpStopChallenge}
+          onLeftMouseDown={handleLeftMouseDown}
+          onLeftMouseUp={clearPressTimer}
+          onLeftMouseLeave={clearPressTimer}
         />
       </div>
       <GameGrid

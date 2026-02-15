@@ -4,9 +4,9 @@ import figuresAnimated from "../data/figures-animated.json";
 export function generateLevelNumberFrames(levelNum: number): string[][] {
   const figure = figures as Record<string, string[]>;
   const figureAnimated = figuresAnimated as Record<string, string[]>;
-  const hundred = Math.floor(levelNum / 100); // 1
-  const dozen = Math.floor((levelNum % 100) / 10).toString(); // 2
-  const units = (levelNum % 10).toString(); // 3
+  const hundred = Math.floor(levelNum / 100);
+  const dozen = Math.floor((levelNum % 100) / 10).toString();
+  const units = (levelNum % 10).toString();
   const length = levelNum.toString().length;
 
   if (length === 2) {

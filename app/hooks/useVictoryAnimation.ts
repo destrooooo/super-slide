@@ -7,14 +7,6 @@ const CYCLES_TO_PLAY = 2;
 
 /**
  * Hook pour gérer l'animation de victoire
- *
- * Remplace les effets en cascade des lignes 170-209 du code original
- *
- * Avantages :
- * - Une seule action ANIMATION_TICK gère index + cycle + transition
- * - Plus d'effets en cascade (effet 4 → effet 5)
- * - Plus de dépendances circulaires
- * - Transition vers l'écran de score intégrée dans le reducer
  */
 export function useVictoryAnimation(
   state: GameState,
@@ -31,8 +23,6 @@ export function useVictoryAnimation(
     }
 
     const interval = setInterval(() => {
-      // Une seule action dispatch
-      // Le reducer gère atomiquement : index + cycle + transition de screen
       dispatch({ type: "ANIMATION_TICK" });
     }, 250);
 
