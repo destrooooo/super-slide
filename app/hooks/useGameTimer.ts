@@ -21,16 +21,14 @@ export function useGameTimer(
 ): void {
   useEffect(() => {
     // Ne démarre le timer que si on est en mode "timer" et que le jeu n'est pas terminé
-    if (state.screenState !== "timer" || state.isWin || state.isLose) {
+    if (state.screenState !== "timer" || state.isWin) {
       return;
     }
 
     const interval = setInterval(() => {
-      // Une seule action dispatch
-      // Le reducer s'occupe de tout : timer + LEDs + défaite
       dispatch({ type: "TIMER_TICK" });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [state.screenState, state.isWin, state.isLose, dispatch]);
+  }, [state.screenState, state.isWin, dispatch]);
 }

@@ -9,3 +9,4 @@ export { useGameTimer } from "./useGameTimer";
 export { useVictoryAnimation } from "./useVictoryAnimation";
 export { useScoreTimeout } from "./useScoreTimeout";
 export { useLevelNumberAnimation } from "./useLevelNumberAnimation";
+export { useAuth } from "./useAuth";

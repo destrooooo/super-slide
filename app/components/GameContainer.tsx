@@ -21,12 +21,15 @@ import {
   useScoreTimeout,
   useLevelNumberAnimation,
 } from "../hooks";
+import { useCaptureChallengeResult } from "../hooks/useCaptureChallengeResult";
+import type { PendingRun } from "../lib/pendingRun";
 
 type GameContainerProps = {
   initialLevel: number;
+  onChallengeEnd?: (run: PendingRun) => void;
 };
 
-export default function GameContainer({ initialLevel }: GameContainerProps) {
+export default function GameContainer({ initialLevel, onChallengeEnd }: GameContainerProps) {
   const levels = levelsData as Record<string, string[]>;
 
   // Remplace 16 useState par 1 seul useReducer
@@ -43,6 +46,7 @@ export default function GameContainer({ initialLevel }: GameContainerProps) {
   useVictoryAnimation(state, dispatch);
   useScoreTimeout(state, dispatch);
   useLevelNumberAnimation(state, dispatch);
+  useCaptureChallengeResult(state, onChallengeEnd);
 
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -53,13 +57,23 @@ export default function GameContainer({ initialLevel }: GameContainerProps) {
 
   // Auto-start après victoire en mode normal
   useEffect(() => {
-    if (state.screenState === "level-preview" && state.isWin && !state.isChallengeMode) {
+    if (
+      state.screenState === "level-preview" &&
+      state.isWin &&
+      !state.isChallengeMode
+    ) {
       const newPieces = calculateDraggablePieces(
         parseLevel(levels[state.levelNum.toString()]),
       );
       dispatch({ type: "RESET_PIECES", pieces: newPieces });
     }
-  }, [state.screenState, state.isWin, state.isChallengeMode, state.levelNum, levels]);
+  }, [
+    state.screenState,
+    state.isWin,
+    state.isChallengeMode,
+    state.levelNum,
+    levels,
+  ]);
 
   // Effet pour calculer la taille des cellules
   useEffect(() => {
@@ -142,7 +156,7 @@ export default function GameContainer({ initialLevel }: GameContainerProps) {
       if (redPiece && redPiece.area === "4 / 2 / 6 / 4" && !state.isWin) {
         // Calcul du score UNIQUEMENT en mode challenge
         const rating = state.isChallengeMode
-          ? calculateRating(state.gameTimer)
+          ? (state.gameTimer > 60 ? "f" : calculateRating(state.gameTimer))
           : null;
         dispatch({ type: "WIN_GAME", pieces: newPieces, rating });
       } else {
@@ -159,6 +173,7 @@ export default function GameContainer({ initialLevel }: GameContainerProps) {
     // 1. Afficher "C" dans l'écran LCD
     dispatch({ type: "SET_CHALLENGE_INTRO" });
 
+    //tracker les set timeout avec un use ref et les clean avec un useeffect
     setTimeout(() => {
       // 2. Countdown 3 → 2 → 1
       dispatch({ type: "START_COUNTDOWN" });

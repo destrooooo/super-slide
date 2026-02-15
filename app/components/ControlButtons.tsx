@@ -49,13 +49,14 @@ export default function ControlButtons({
           className="rounded-lg max-xxs:rounded-md bg-[#4b607f] active:scale-95 active:translate-y-px hover:scale-101 ease-in-out duration-75"
           style={{
             ...buttonSize,
-            boxShadow: '0 4px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
-            borderBottom: '2px solid rgba(0,0,0,0.2)',
+            boxShadow:
+              "0 4px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+            borderBottom: "2px solid rgba(0,0,0,0.2)",
           }}
           onClick={onLeftClick}
         ></button>
         <p className="absolute bottom-1/10 h-4 max-xxs:bottom-2 max-xxs:h-fit">
-          L
+          SAVE
         </p>
       </div>
       <div className="relative flex flex-col h-full items-center justify-center">
@@ -67,8 +68,9 @@ export default function ControlButtons({
           className="rounded-lg max-xxs:rounded-md bg-[#4b607f] active:scale-95 active:translate-y-px hover:scale-101 ease-in-out duration-75"
           style={{
             ...buttonSize,
-            boxShadow: '0 4px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
-            borderBottom: '2px solid rgba(0,0,0,0.2)',
+            boxShadow:
+              "0 4px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+            borderBottom: "2px solid rgba(0,0,0,0.2)",
           }}
           onClick={onRightClick}
           onMouseDown={onRightMouseDown}
@@ -78,7 +80,7 @@ export default function ControlButtons({
           onTouchEnd={onRightMouseUp}
         ></button>
         <p className="absolute bottom-1/10 h-4 max-xxs:bottom-2 max-xxs:h-fit">
-          C
+          CHALL
         </p>
       </div>
       <div className="relative flex flex-col h-full items-center justify-center">
@@ -90,8 +92,9 @@ export default function ControlButtons({
           className="rounded-lg max-xxs:rounded-md bg-[#f3701e] active:scale-95 active:translate-y-px hover:scale-101 ease-in-out duration-75"
           style={{
             ...buttonSize,
-            boxShadow: '0 4px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
-            borderBottom: '2px solid rgba(0,0,0,0.2)',
+            boxShadow:
+              "0 4px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+            borderBottom: "2px solid rgba(0,0,0,0.2)",
           }}
           onClick={onRedClick}
           onMouseDown={onRedMouseDown}
@@ -101,7 +104,7 @@ export default function ControlButtons({
           onTouchEnd={onRedMouseUp}
         />
         <p className="absolute bottom-1/10 h-4 max-xxs:bottom-2 max-xxs:h-fit">
-          ON / OFF
+          RESET
         </p>
       </div>
     </div>

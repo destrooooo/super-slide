@@ -26,7 +26,7 @@ export interface GameState {
   cellSize: { width: number; height: number };
   shakeId: number | null;
   shakeDirection: "x" | "y" | null;
-  pressTimer: NodeJS.Timeout | null;
+  pressTimer: NodeJS.Timeout | null; //déclencher des rendus pour rien, utiliser un UseRef à la place
   isHolding: boolean;
   levelNumberFrames: string[][];
 }
@@ -107,37 +107,23 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case "TIMER_TICK": {
-      // Fix lignes 244, 249-250 : toutes les mises à jour atomiques
       const newTime = state.gameTimer + 1;
       const ledsOff =
         newTime <= 20
           ? Math.floor(newTime)
           : newTime <= 40
             ? Math.floor(newTime - 20)
-            : Math.floor(newTime - 40);
+            : newTime <= 60
+              ? Math.floor(newTime - 40)
+              : 20; // toutes éteintes après 60s
       const timerColor =
         newTime <= 20 ? "#324E44" : newTime <= 40 ? "#e8d8c9" : "#f3701e";
-      const hasLost = newTime >= 60;
-
-      if (hasLost) {
-        console.log("🔵 TIMER_TICK -> screenState: score (hasLost)");
-      }
 
       return {
         ...state,
         gameTimer: newTime,
-        timerLeds:
-          newTime <= 20
-            ? Array(20).fill(false).fill(true, ledsOff)
-            : newTime <= 40
-              ? Array(20).fill(false).fill(true, ledsOff)
-              : newTime <= 60
-                ? Array(20).fill(false).fill(true, ledsOff)
-                : state.timerLeds,
-        timerColor: timerColor,
-        isLose: hasLost,
-        finalRating: hasLost ? "f" : state.finalRating,
-        screenState: hasLost ? "score" : state.screenState,
+        timerLeds: Array(20).fill(false).fill(true, ledsOff),
+        timerColor,
       };
     }
 

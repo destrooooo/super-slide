@@ -3,7 +3,7 @@ import type { Dispatch } from "react";
 import type { GameState } from "./useGameReducer";
 import type { GameAction } from "../types/actions";
 
-const CYCLES_TO_PLAY = 3;
+const CYCLES_TO_PLAY = 2;
 
 /**
  * Hook pour gérer l'animation de victoire
@@ -18,12 +18,15 @@ const CYCLES_TO_PLAY = 3;
  */
 export function useVictoryAnimation(
   state: GameState,
-  dispatch: Dispatch<GameAction>
+  dispatch: Dispatch<GameAction>,
 ): void {
   useEffect(() => {
     // Ne lance l'animation que si on est sur l'écran de victoire
     // et que l'animation n'est pas terminée
-    if (state.screenState !== "victory" || state.animationCycle >= CYCLES_TO_PLAY) {
+    if (
+      state.screenState !== "victory" ||
+      state.animationCycle >= CYCLES_TO_PLAY
+    ) {
       return;
     }
 
