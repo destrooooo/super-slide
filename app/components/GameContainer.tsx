@@ -235,7 +235,7 @@ export default function GameContainer({
     rightHoldTimerRef.current = setTimeout(() => {
       dispatch({ type: "START_CHALLENGE" });
       startChallengeGame();
-    }, 3000);
+    }, 1000);
   };
 
   const handleMouseUp = () => {
@@ -271,7 +271,7 @@ export default function GameContainer({
       devLog("level sauvegardé");
 
       longPressTriggeredRef.current = true;
-    }, 3000);
+    }, 1000);
   };
 
   const clearPressTimer = () => {
@@ -302,7 +302,7 @@ export default function GameContainer({
       dispatch({ type: "STOP_CHALLENGE_MODE" });
       dispatch({ type: "SET_HOLDING", isHolding: false });
       devLog("mode de jeu normal");
-    }, 3000);
+    }, 1000);
   };
 
   const handleMouseUpStopChallenge = () => {

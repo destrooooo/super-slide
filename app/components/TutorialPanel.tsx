@@ -288,7 +288,7 @@ function PanelContent({ onClose }: { onClose: () => void }) {
                 style={{ background: "#4b607f" }}
               />
             </span>
-            C pendant 3 secondes.
+            C pendant 1 seconde.
           </p>
           <ul className="space-y-1.5 text-xs text-[#e8d8c9]/70 list-none">
             <li>Un compte à rebours 3 → 2 → 1 apparait</li>
