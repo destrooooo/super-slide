@@ -10,6 +10,7 @@ import {
 } from "../lib/score";
 import { useAuth } from "../hooks";
 import { signOut } from "../lib/auth";
+import { CaretRightIcon, CaretLeftIcon } from "@phosphor-icons/react";
 
 type Tab = "level" | "profile" | "compare";
 
@@ -186,9 +187,9 @@ export default function Leaderboard({ onOpenAuth }: LeaderboardProps) {
                   return next;
                 });
               }}
-              className="text-zinc-400 hover:text-white text-lg px-2"
+              className="text-zinc-400 hover:text-white hover:scale-110 transition-all px-2"
             >
-              ◀
+              <CaretLeftIcon size={20} weight="fill" />
             </button>
             <div className="flex items-center gap-1.5 min-w-25 justify-center">
               <span className="text-white font-bold text-lg">Niveau</span>
@@ -229,9 +230,9 @@ export default function Leaderboard({ onOpenAuth }: LeaderboardProps) {
                   return next;
                 });
               }}
-              className="text-zinc-400 hover:text-white text-lg px-2"
+              className="text-zinc-400 hover:text-white hover:scale-110 transition-all px-2"
             >
-              ▶
+              <CaretRightIcon size={20} weight="fill" />
             </button>
             <button
               onClick={() => mutate(["leaderboard", selectedLevel])}
